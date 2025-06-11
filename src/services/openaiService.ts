@@ -12,8 +12,10 @@ interface OpenAIResponse {
   }[];
 }
 
+// Integrated API key directly in the code
+const OPENAI_API_KEY = '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';
+
 export const makeOpenAIPrediction = async (
-  apiKey: string,
   userMessage: string,
   conversationHistory: OpenAIMessage[] = []
 ): Promise<string> => {
@@ -40,11 +42,11 @@ export const makeOpenAIPrediction = async (
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o',
         messages,
         temperature: 0.7,
         max_tokens: 500,
@@ -55,13 +57,15 @@ export const makeOpenAIPrediction = async (
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      const errorData = await response.json();
+      console.error('OpenAI API Response:', errorData);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
     }
 
     const data: OpenAIResponse = await response.json();
     return data.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
   } catch (error) {
     console.error('OpenAI API Error:', error);
-    throw new Error('Failed to get AI prediction. Please check your API key and try again.');
+    throw new Error('Failed to get AI prediction. Please try again.');
   }
 };

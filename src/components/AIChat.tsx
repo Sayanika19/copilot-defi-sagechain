@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Brain, User, Sparkles, AlertCircle } from "lucide-react";
+import { Send, Brain, User, Sparkles } from "lucide-react";
 import { makeOpenAIPrediction } from "@/services/openaiService";
-import ApiKeyManager from "./ApiKeyManager";
 
 interface Message {
   id: string;
@@ -21,13 +20,12 @@ const AIChat = () => {
     {
       id: '1',
       type: 'ai',
-      content: "Hello! I'm your DeFi AI assistant with real-time prediction capabilities. I can help you with market analysis, swap recommendations, portfolio insights, and DeFi strategies. Set your OpenAI API key to unlock advanced predictions!",
+      content: "Hello! I'm your DeFi AI assistant with real-time prediction capabilities. I can help you with market analysis, swap recommendations, portfolio insights, and DeFi strategies. Ask me anything!",
       timestamp: new Date(),
     }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [apiKey, setApiKey] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const suggestedActions = [
@@ -42,26 +40,6 @@ const AIChat = () => {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [messages]);
-
-  useEffect(() => {
-    const savedApiKey = localStorage.getItem('openai_api_key');
-    if (savedApiKey) {
-      setApiKey(savedApiKey);
-    }
-  }, []);
-
-  const handleApiKeySet = (newApiKey: string) => {
-    setApiKey(newApiKey);
-    localStorage.setItem('openai_api_key', newApiKey);
-    
-    const confirmMessage: Message = {
-      id: Date.now().toString(),
-      type: 'ai',
-      content: "✅ OpenAI API key configured successfully! I can now provide real-time predictions and advanced DeFi analysis. Ask me anything!",
-      timestamp: new Date(),
-    };
-    setMessages(prev => [...prev, confirmMessage]);
-  };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -78,20 +56,13 @@ const AIChat = () => {
     setIsLoading(true);
 
     try {
-      let aiResponse: string;
+      // Use real OpenAI API with integrated key
+      const conversationHistory = messages.map(msg => ({
+        role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
+        content: msg.content
+      }));
       
-      if (apiKey) {
-        // Use real OpenAI API for predictions
-        const conversationHistory = messages.map(msg => ({
-          role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
-          content: msg.content
-        }));
-        
-        aiResponse = await makeOpenAIPrediction(apiKey, inputValue, conversationHistory);
-      } else {
-        // Fallback to mock responses
-        aiResponse = generateMockResponse(inputValue);
-      }
+      const aiResponse = await makeOpenAIPrediction(inputValue, conversationHistory);
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -106,24 +77,12 @@ const AIChat = () => {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: "⚠️ I encountered an error generating a prediction. Please check your API key and try again, or contact support if the issue persists.",
+        content: "⚠️ I encountered an error generating a prediction. Let me try to help you with general DeFi guidance instead.",
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const generateMockResponse = (input: string): string => {
-    const lowercaseInput = input.toLowerCase();
-    
-    if (lowercaseInput.includes('predict') || lowercaseInput.includes('price')) {
-      return "🔮 For real-time price predictions and market analysis, please set your OpenAI API key. I can then provide advanced insights using current market data and AI analysis.";
-    } else if (lowercaseInput.includes('yield') || lowercaseInput.includes('farm')) {
-      return "🌾 To get current yield farming opportunities with real-time APY data, please configure your OpenAI API key for live market analysis.";
-    } else {
-      return "💡 I can provide much more detailed and current analysis once you set up your OpenAI API key. This enables real-time predictions and market insights!";
     }
   };
 
@@ -140,17 +99,7 @@ const AIChat = () => {
             AI Assistant
             <Sparkles className="w-4 h-4 text-yellow-400" />
           </CardTitle>
-          <ApiKeyManager 
-            onApiKeySet={handleApiKeySet}
-            hasApiKey={!!apiKey}
-          />
         </div>
-        {!apiKey && (
-          <div className="flex items-center gap-2 text-orange-400 text-xs">
-            <AlertCircle className="w-3 h-3" />
-            Set API key for real-time predictions
-          </div>
-        )}
       </CardHeader>
       
       <CardContent className="flex-1 flex flex-col p-0">
@@ -230,7 +179,7 @@ const AIChat = () => {
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder={apiKey ? "Ask for real-time DeFi predictions..." : "Set API key for predictions..."}
+              placeholder="Ask for real-time DeFi predictions..."
               className="bg-slate-800/50 border-purple-800/30 text-white placeholder:text-slate-400"
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             />
