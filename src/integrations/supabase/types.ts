@@ -92,41 +92,6 @@ export type Database = {
         }
         Relationships: []
       }
-      modules: {
-        Row: {
-          content: string
-          course_id: string
-          id: string
-          order: number
-          title: string
-          "video-url": string
-        }
-        Insert: {
-          content: string
-          course_id?: string
-          id?: string
-          order: number
-          title: string
-          "video-url": string
-        }
-        Update: {
-          content?: string
-          course_id?: string
-          id?: string
-          order?: number
-          title?: string
-          "video-url"?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "modules_course_id_fkey"
-            columns: ["course_id"]
-            isOneToOne: true
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       rate_limits: {
         Row: {
           endpoint: string
