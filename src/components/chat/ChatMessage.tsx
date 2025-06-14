@@ -24,7 +24,16 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
             : 'bg-slate-800/80 text-slate-200'
         }`}
       >
-        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+        <p className="text-sm whitespace-pre-wrap">
+          {message.content}
+          {message.type === 'ai' && message.content === '' && (
+            <span className="inline-flex items-center">
+              <span className="animate-pulse">●</span>
+              <span className="animate-pulse delay-100">●</span>
+              <span className="animate-pulse delay-200">●</span>
+            </span>
+          )}
+        </p>
         {message.intent && (
           <div className="mt-2 pt-2 border-t border-slate-600">
             <div className="flex items-center gap-2">

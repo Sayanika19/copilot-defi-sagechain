@@ -9,12 +9,13 @@ export const useAIChat = () => {
     {
       id: '1',
       type: 'ai',
-      content: "Hello! I'm your DeFi AI assistant. I can help you with portfolio analysis, explain DeFi protocols, guide you through transactions, and answer questions about blockchain technology. How can I assist you today?",
+      content: "Hello! I'm your DeFi AI assistant powered by Gemini. I can help you with portfolio analysis, explain DeFi protocols, guide you through transactions, and answer questions about blockchain technology. How can I assist you today?",
       timestamp: new Date(),
     }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -64,75 +65,103 @@ export const useAIChat = () => {
     try {
       const intent = recognizeIntent(currentInput);
       
-      console.log('Sending message to AI chat function:', {
+      console.log('Sending message to AI chat function for streaming:', {
         message: currentInput,
         intent: intent
       });
-      
-      const { data, error } = await supabase.functions.invoke('ai-chat', {
-        body: {
-          message: currentInput,
-          intent: intent
-        }
-      });
 
-      console.log('AI chat function response:', { data, error });
-
-      if (error) {
-        console.error('Error calling AI chat function:', error);
-        
-        let errorMessage = "I'm sorry, I encountered an error while processing your request.";
-        
-        if (error.message?.includes('OpenAI API key not configured')) {
-          errorMessage = "AI service is currently unavailable. Please try again later.";
-        } else if (error.message?.includes('Failed to get AI response')) {
-          errorMessage = "The AI service is temporarily unavailable. Please try again.";
-        }
-
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
-
-        const errorMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          type: 'ai',
-          content: errorMessage,
-          timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, errorMsg]);
-        return;
-      }
-
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
+      // Create initial AI message for streaming
+      const aiMessageId = (Date.now() + 1).toString();
+      const initialAiMessage: Message = {
+        id: aiMessageId,
         type: 'ai',
-        content: data?.response || "I apologize, but I couldn't generate a response.",
+        content: '',
         timestamp: new Date(),
         action: intent,
         intent: intent,
-        requiresWeb3: data?.requiresWeb3,
+        requiresWeb3: intent === 'stake_token' || intent === 'swap_token',
       };
 
-      setMessages(prev => [...prev, aiMessage]);
+      setMessages(prev => [...prev, initialAiMessage]);
+      setStreamingMessageId(aiMessageId);
+
+      // Call the edge function for streaming response
+      const response = await fetch(`https://jahnklalgnspbttbippf.supabase.co/functions/v1/ai-chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+        },
+        body: JSON.stringify({
+          message: currentInput,
+          intent: intent
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get streaming response');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response stream available');
+      }
+
+      let accumulatedContent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.content) {
+                accumulatedContent += data.content;
+                
+                // Update the streaming message
+                setMessages(prev => prev.map(msg => 
+                  msg.id === aiMessageId 
+                    ? { ...msg, content: accumulatedContent }
+                    : msg
+                ));
+              }
+            } catch (e) {
+              // Skip invalid JSON
+            }
+          }
+        }
+      }
+
+      setStreamingMessageId(null);
+      console.log('Streaming response completed');
 
     } catch (error) {
       console.error('Unexpected error:', error);
       
       toast({
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: "Failed to get AI response. Please try again.",
         variant: "destructive",
       });
 
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai',
-        content: "I'm sorry, I encountered an unexpected error. Please try again later.",
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      // Remove the empty AI message and add error message
+      setMessages(prev => {
+        const filtered = prev.filter(msg => msg.id !== streamingMessageId);
+        return [...filtered, {
+          id: (Date.now() + 2).toString(),
+          type: 'ai',
+          content: "I'm sorry, I encountered an error while processing your request. Please try again.",
+          timestamp: new Date(),
+        }];
+      });
+
+      setStreamingMessageId(null);
     } finally {
       setIsLoading(false);
     }
@@ -141,7 +170,7 @@ export const useAIChat = () => {
   return {
     messages,
     inputValue,
-    isLoading,
+    isLoading: isLoading || streamingMessageId !== null,
     scrollAreaRef,
     setInputValue,
     handleSendMessage,
