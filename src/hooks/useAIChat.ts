@@ -110,33 +110,43 @@ export const useAIChat = () => {
       }
 
       let accumulatedContent = '';
+      console.log('Starting to read streaming response...');
 
       while (true) {
         const { done, value } = await reader.read();
         
-        if (done) break;
+        if (done) {
+          console.log('Stream reading completed');
+          break;
+        }
 
         const chunk = new TextDecoder().decode(value);
+        console.log('Received chunk:', chunk);
+        
         const lines = chunk.split('\n');
         
         for (const line of lines) {
           if (line.trim() === 'data: [DONE]') {
-            console.log('Stream completed');
+            console.log('Stream completed signal received');
             continue;
           }
           
           if (line.startsWith('data: ')) {
             try {
-              const data = JSON.parse(line.slice(6));
-              if (data.content) {
-                accumulatedContent += data.content;
-                
-                // Update the streaming message
-                setMessages(prev => prev.map(msg => 
-                  msg.id === aiMessageId 
-                    ? { ...msg, content: accumulatedContent }
-                    : msg
-                ));
+              const dataStr = line.slice(6).trim();
+              if (dataStr) {
+                const data = JSON.parse(dataStr);
+                if (data.content) {
+                  console.log('Adding content to accumulated text:', data.content);
+                  accumulatedContent += data.content;
+                  
+                  // Update the streaming message with accumulated content
+                  setMessages(prev => prev.map(msg => 
+                    msg.id === aiMessageId 
+                      ? { ...msg, content: accumulatedContent }
+                      : msg
+                  ));
+                }
               }
             } catch (e) {
               console.log('Skipping invalid JSON in frontend:', line);
@@ -146,7 +156,16 @@ export const useAIChat = () => {
       }
 
       setStreamingMessageId(null);
-      console.log('Streaming response completed');
+      console.log('Final accumulated content:', accumulatedContent);
+
+      // If no content was received, show an error
+      if (!accumulatedContent.trim()) {
+        setMessages(prev => prev.map(msg => 
+          msg.id === aiMessageId 
+            ? { ...msg, content: "I apologize, but I encountered an issue generating a response. Please try again." }
+            : msg
+        ));
+      }
 
     } catch (error) {
       console.error('Unexpected error:', error);

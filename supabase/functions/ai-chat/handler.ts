@@ -32,23 +32,18 @@ export const handleChatRequest = async (req: Request): Promise<Response> => {
         const decoder = new TextDecoder();
         const text = decoder.decode(chunk);
         
+        console.log('Raw chunk received:', text.substring(0, 200));
+        
         // Split by lines and process each line
-        const lines = text.split('\n').filter(line => line.trim());
+        const lines = text.split('\n');
         
         for (const line of lines) {
-          // Skip empty lines and non-JSON lines
-          if (!line.trim() || line.trim() === 'data: [DONE]') continue;
+          // Skip empty lines
+          if (!line.trim()) continue;
           
           try {
-            // Try to parse as JSON directly (Gemini format)
-            let jsonData;
-            if (line.startsWith('data: ')) {
-              jsonData = JSON.parse(line.slice(6));
-            } else if (line.trim().startsWith('{')) {
-              jsonData = JSON.parse(line.trim());
-            } else {
-              continue;
-            }
+            // Parse the JSON response from Gemini
+            const jsonData = JSON.parse(line);
             
             // Extract content from Gemini response structure
             if (jsonData.candidates && jsonData.candidates.length > 0) {
@@ -57,6 +52,7 @@ export const handleChatRequest = async (req: Request): Promise<Response> => {
                 const content = candidate.content.parts[0].text;
                 if (content) {
                   console.log('Streaming content chunk:', content);
+                  // Send the content in the expected format
                   controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content })}\n\n`));
                 }
               }
@@ -69,6 +65,7 @@ export const handleChatRequest = async (req: Request): Promise<Response> => {
       
       flush(controller) {
         // Send final message to indicate stream completion
+        console.log('Stream flush - sending completion signal');
         controller.enqueue(new TextEncoder().encode(`data: [DONE]\n\n`));
       }
     });
