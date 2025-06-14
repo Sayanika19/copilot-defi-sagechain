@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Bar, BarChart } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Bar, BarChart, Cell } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { useMemo } from "react";
 import { WalletData } from "../WalletConnector";
@@ -194,11 +194,14 @@ const PerformanceMetrics = ({ walletData, isConnected }: PerformanceMetricsProps
                   content={<ChartTooltipContent />}
                   formatter={(value) => [`$${value.toLocaleString()}`, 'P&L']}
                 />
-                <Bar
-                  dataKey="pnl"
-                  fill={(entry: any) => entry.pnl >= 0 ? 'hsl(120, 100%, 70%)' : 'hsl(0, 100%, 70%)'}
-                  radius={[2, 2, 0, 0]}
-                />
+                <Bar dataKey="pnl" radius={[2, 2, 0, 0]}>
+                  {performanceData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.pnl >= 0 ? 'hsl(120, 100%, 70%)' : 'hsl(0, 100%, 70%)'}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ChartContainer>
           </TabsContent>
