@@ -32,9 +32,16 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
   }, [isConnected, walletData?.address]);
 
   useEffect(() => {
-    if (data.balance?.total_value_usd) {
+    if (data.balance?.total_value_usd !== undefined) {
       const currentValue = parseFloat(data.balance.total_value_usd);
       setPortfolioValue(currentValue);
+      
+      // If wallet has no value, show zero change
+      if (currentValue === 0) {
+        setDailyChange(0);
+        setChangePercent(0);
+        return;
+      }
       
       // Calculate daily change based on recent transaction activity
       const transactions = data.transactions?.transactions || [];
@@ -51,23 +58,21 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
           recentTxs.forEach((tx: any) => {
             const value = parseFloat(tx.amount || '0') * parseFloat(tx.price_usd || '0');
             if (tx.type === 'buy') {
-              dailyNetChange -= value * 0.1; // Small negative impact for buying
+              dailyNetChange -= value * 0.1;
             } else if (tx.type === 'sell') {
-              dailyNetChange += value * 0.05; // Small positive impact for selling
+              dailyNetChange += value * 0.05;
             }
           });
           
           setDailyChange(dailyNetChange);
           setChangePercent(currentValue > 0 ? (dailyNetChange / currentValue) * 100 : 0);
         } else {
-          // No recent transactions, show small market-based change
-          const marketChange = currentValue * (Math.random() * 0.02 - 0.01); // ±1% variation
+          const marketChange = currentValue * (Math.random() * 0.02 - 0.01);
           setDailyChange(marketChange);
           setChangePercent((marketChange / currentValue) * 100);
         }
       } else {
-        // No transaction data, show conservative daily change
-        const conservativeChange = currentValue * 0.002; // 0.2% daily change
+        const conservativeChange = currentValue * 0.002;
         setDailyChange(conservativeChange);
         setChangePercent(0.2);
       }
@@ -77,13 +82,8 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
   }, [data.balance, data.transactions]);
 
   const getActiveChains = () => {
-    if (!isConnected || !data.tokens?.tokens) return 0;
-    // Count unique chains from token data
-    const chains = new Set();
-    data.tokens.tokens.forEach((token: any) => {
-      chains.add('ethereum'); // All our data is on Ethereum for now
-    });
-    return chains.size;
+    if (!isConnected || !data.tokens?.tokens || data.tokens.tokens.length === 0) return 0;
+    return 1; // Currently only Ethereum
   };
 
   const getActivePositions = () => {
@@ -143,7 +143,7 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
                 </div>
                 <div className={`flex items-center text-sm ${changePercent >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {changePercent >= 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
-                  {isLoading ? 'Live Data' : `${changePercent >= 0 ? '+' : ''}$${Math.abs(dailyChange).toFixed(2)} (${Math.abs(changePercent).toFixed(1)}%)`}
+                  {isLoading ? 'Live Data' : portfolioValue === 0 ? 'No Assets' : `${changePercent >= 0 ? '+' : ''}$${Math.abs(dailyChange).toFixed(2)} (${Math.abs(changePercent).toFixed(1)}%)`}
                 </div>
               </div>
               <DollarSign className="w-8 h-8 text-green-400" />
@@ -212,18 +212,33 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-blue-900/20 rounded-lg border border-blue-800/30">
-              <div className="flex items-center space-x-3">
-                <TrendingUp className="w-4 h-4 text-blue-400" />
-                <div>
-                  <div className="text-white text-sm font-medium">Live Blockchain Data Active</div>
-                  <div className="text-blue-300 text-xs">Portfolio values updating from connected wallet transactions</div>
+            {portfolioValue === 0 ? (
+              <div className="flex items-center justify-between p-3 bg-blue-900/20 rounded-lg border border-blue-800/30">
+                <div className="flex items-center space-x-3">
+                  <Wallet className="w-4 h-4 text-blue-400" />
+                  <div>
+                    <div className="text-white text-sm font-medium">Empty Wallet Detected</div>
+                    <div className="text-blue-300 text-xs">No assets found in connected wallet</div>
+                  </div>
                 </div>
+                <Badge variant="outline" className="border-blue-600 text-blue-300">
+                  Live
+                </Badge>
               </div>
-              <Badge variant="outline" className="border-blue-600 text-blue-300">
-                Live
-              </Badge>
-            </div>
+            ) : (
+              <div className="flex items-center justify-between p-3 bg-blue-900/20 rounded-lg border border-blue-800/30">
+                <div className="flex items-center space-x-3">
+                  <TrendingUp className="w-4 h-4 text-blue-400" />
+                  <div>
+                    <div className="text-white text-sm font-medium">Live Blockchain Data Active</div>
+                    <div className="text-blue-300 text-xs">Portfolio values updating from connected wallet transactions</div>
+                  </div>
+                </div>
+                <Badge variant="outline" className="border-blue-600 text-blue-300">
+                  Live
+                </Badge>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
