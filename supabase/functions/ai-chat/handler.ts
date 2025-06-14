@@ -35,9 +35,9 @@ export const handleChatRequest = async (req: Request): Promise<Response> => {
         // Process each line of the streaming response
         const lines = text.split('\n');
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
+          if (line.trim().startsWith('{')) {
             try {
-              const jsonData = JSON.parse(line.slice(6));
+              const jsonData = JSON.parse(line.trim());
               if (jsonData.candidates && jsonData.candidates[0] && jsonData.candidates[0].content) {
                 const content = jsonData.candidates[0].content.parts[0]?.text;
                 if (content) {
@@ -46,6 +46,7 @@ export const handleChatRequest = async (req: Request): Promise<Response> => {
               }
             } catch (e) {
               // Skip invalid JSON lines
+              console.log('Skipping invalid JSON:', line);
             }
           }
         }
