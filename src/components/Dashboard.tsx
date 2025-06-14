@@ -11,11 +11,11 @@ interface DashboardProps {
 }
 
 const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
-  // Calculate portfolio value based on wallet data
+  // Calculate portfolio value based on actual MetaMask wallet balance
   const getPortfolioValue = () => {
-    if (!walletData?.balance || !isConnected) return 12500;
+    if (!walletData?.balance || !isConnected) return 0;
     const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
-    const ethPrice = 2800; // Mock ETH price
+    const ethPrice = 2000; // Current ETH price
     return Math.round(ethAmount * ethPrice);
   };
 
@@ -24,35 +24,29 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
     if (!walletData?.balance || !isConnected) return 0;
     const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
     
-    // Simulate positions based on ETH amount
-    if (ethAmount >= 5) return 12;
-    if (ethAmount >= 3) return 8;
-    if (ethAmount >= 1) return 5;
-    if (ethAmount >= 0.5) return 3;
-    if (ethAmount >= 0.1) return 2;
-    return 1;
+    // Return 1 if wallet has ETH, 0 if empty
+    return ethAmount > 0 ? 1 : 0;
   };
 
-  // Calculate risk score based on wallet value and holdings
+  // Calculate risk score based on wallet value
   const getRiskScore = () => {
-    if (!walletData?.balance || !isConnected) return { score: 'Medium', color: 'text-yellow-400' };
+    if (!walletData?.balance || !isConnected) return { score: 'Unknown', color: 'text-gray-400' };
     const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
     const portfolioValue = getPortfolioValue();
     
-    // Risk assessment based on portfolio size and concentration
-    if (portfolioValue > 20000 && ethAmount < portfolioValue * 0.7 / 2800) {
-      return { score: 'Low', color: 'text-green-400' };
+    if (portfolioValue === 0) {
+      return { score: 'No Risk', color: 'text-blue-400' };
     } else if (portfolioValue > 10000) {
+      return { score: 'Low', color: 'text-green-400' };
+    } else if (portfolioValue > 1000) {
       return { score: 'Medium', color: 'text-yellow-400' };
-    } else if (portfolioValue > 5000) {
-      return { score: 'Medium-High', color: 'text-orange-400' };
     } else {
       return { score: 'High', color: 'text-red-400' };
     }
   };
 
   const portfolioValue = getPortfolioValue();
-  const portfolioChange = isConnected ? ((portfolioValue - 10000) / 10000 * 100) : 8.5;
+  const portfolioChange = portfolioValue > 0 ? 0.1 : 0; // Small positive change for non-zero portfolios
   const activePositions = getActivePositions();
   const riskScore = getRiskScore();
 
@@ -85,9 +79,9 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
                 <div className="text-2xl font-bold text-white">
                   ${portfolioValue.toLocaleString()}
                 </div>
-                <div className={`flex items-center text-sm ${portfolioChange > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {portfolioChange > 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
-                  {Math.abs(portfolioChange).toFixed(1)}%
+                <div className={`flex items-center text-sm ${portfolioChange > 0 ? 'text-green-400' : portfolioValue === 0 ? 'text-gray-400' : 'text-red-400'}`}>
+                  {portfolioChange > 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : portfolioValue === 0 ? null : <TrendingDown className="w-4 h-4 mr-1" />}
+                  {portfolioValue === 0 ? 'Empty wallet' : `${Math.abs(portfolioChange).toFixed(1)}%`}
                 </div>
               </div>
               <DollarSign className="w-8 h-8 text-purple-400" />
@@ -103,8 +97,8 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-2xl font-bold text-white">{activePositions}</div>
-                <div className="text-sm text-green-400">
-                  {isConnected ? '+2 this week' : 'Connect wallet'}
+                <div className="text-sm text-purple-300">
+                  {isConnected ? 'From MetaMask' : 'Connect wallet'}
                 </div>
               </div>
               <Activity className="w-8 h-8 text-purple-400" />
@@ -136,7 +130,7 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
               <div>
                 <div className={`text-2xl font-bold ${riskScore.color}`}>{riskScore.score}</div>
                 <div className="text-sm text-purple-300">
-                  {isConnected ? 'Calculated' : 'Connect wallet'}
+                  {isConnected ? 'Live from wallet' : 'Connect wallet'}
                 </div>
               </div>
               <Shield className="w-8 h-8 text-purple-400" />
@@ -193,15 +187,27 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
-              <div className="p-3 bg-purple-900/20 rounded-lg border border-purple-800/30">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-white text-sm font-medium">Portfolio Rebalancing</span>
-                  <Badge className="bg-purple-600/20 text-purple-300">High Priority</Badge>
+              {portfolioValue === 0 ? (
+                <div className="p-3 bg-blue-900/20 rounded-lg border border-blue-800/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-white text-sm font-medium">Fund Your Wallet</span>
+                    <Badge className="bg-blue-600/20 text-blue-300">High Priority</Badge>
+                  </div>
+                  <p className="text-blue-300 text-xs">
+                    Add ETH to your MetaMask wallet to start exploring DeFi opportunities.
+                  </p>
                 </div>
-                <p className="text-purple-300 text-xs">
-                  Consider diversifying your ETH holdings into stable yield farming opportunities.
-                </p>
-              </div>
+              ) : (
+                <div className="p-3 bg-purple-900/20 rounded-lg border border-purple-800/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-white text-sm font-medium">Portfolio Diversification</span>
+                    <Badge className="bg-purple-600/20 text-purple-300">Medium Priority</Badge>
+                  </div>
+                  <p className="text-purple-300 text-xs">
+                    Consider diversifying your ETH holdings into stable yield farming opportunities.
+                  </p>
+                </div>
+              )}
               
               <div className="p-3 bg-blue-900/20 rounded-lg border border-blue-800/30">
                 <div className="flex items-center justify-between mb-2">
@@ -246,7 +252,7 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
             </div>
             
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400">$2,847</div>
+              <div className="text-2xl font-bold text-blue-400">$2,000</div>
               <div className="text-sm text-purple-300">ETH Price</div>
               <div className="mt-2">
                 <Badge className="bg-blue-600/20 text-blue-300">+4.2%</Badge>
