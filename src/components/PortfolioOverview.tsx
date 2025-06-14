@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp, TrendingDown, Wallet, DollarSign, PieChart, AlertTriangle } from "lucide-react";
 import { WalletData } from "./WalletConnector";
+import AssetAllocationChart from "./AssetAllocationChart";
 
 interface PortfolioOverviewProps {
   isConnected: boolean;
@@ -133,6 +134,9 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
           </CardContent>
         </Card>
       </div>
+
+      {/* Asset Allocation Chart */}
+      <AssetAllocationChart />
 
       {/* Assets Table */}
       <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">

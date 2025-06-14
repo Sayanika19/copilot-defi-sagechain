@@ -1,8 +1,8 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, DollarSign, Activity, Zap, Shield } from "lucide-react";
 import { WalletData } from "./WalletConnector";
+import PortfolioPerformanceChart from "./PortfolioPerformanceChart";
 
 interface DashboardProps {
   isConnected: boolean;
@@ -91,6 +91,9 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Portfolio Performance Chart */}
+      <PortfolioPerformanceChart />
 
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
