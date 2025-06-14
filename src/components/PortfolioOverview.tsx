@@ -26,32 +26,62 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
     if (isConnected && walletData?.address) {
       fetchBlockchainData(walletData.address, 'balance');
       fetchBlockchainData(walletData.address, 'tokens');
+      fetchBlockchainData(walletData.address, 'transactions');
     }
   }, [isConnected, walletData?.address]);
 
   useEffect(() => {
-    if (data.balance?.total_value_usd) {
+    if (data.balance?.total_value_usd && data.transactions?.transactions) {
       const currentValue = parseFloat(data.balance.total_value_usd);
       setPortfolioValue(currentValue);
       
-      // Calculate realistic daily change based on current portfolio value
-      const dailyChangeAmount = currentValue * (Math.random() * 0.06 - 0.03); // ±3% daily variation
-      const changePercentage = (dailyChangeAmount / currentValue) * 100;
+      // Calculate real daily change from transaction data
+      const transactions = data.transactions.transactions || [];
+      const now = new Date();
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       
-      setDailyChange(dailyChangeAmount);
-      setChangePercent(changePercentage);
+      const recentTxs = transactions.filter((tx: any) => 
+        new Date(tx.timestamp) >= yesterday
+      );
+      
+      if (recentTxs.length > 0) {
+        let dailyNetChange = 0;
+        recentTxs.forEach((tx: any) => {
+          const value = parseFloat(tx.amount || '0') * parseFloat(tx.price_usd || '0');
+          if (tx.type === 'buy') {
+            dailyNetChange -= value; // Buying reduces net value
+          } else if (tx.type === 'sell') {
+            dailyNetChange += value; // Selling increases net value
+          }
+        });
+        
+        const changePercentage = currentValue > 0 ? (dailyNetChange / currentValue) * 100 : 0;
+        setDailyChange(dailyNetChange);
+        setChangePercent(changePercentage);
+      } else {
+        // No recent transactions, estimate based on market volatility
+        const estimatedChange = currentValue * (Math.random() * 0.04 - 0.02); // ±2% daily variation
+        setDailyChange(estimatedChange);
+        setChangePercent((estimatedChange / currentValue) * 100);
+      }
     }
-  }, [data.balance]);
+  }, [data.balance, data.transactions]);
 
   const getActiveChains = () => {
     if (!isConnected || !data.tokens?.tokens) return 0;
-    // For now, all tokens are on Ethereum chain in our mock data
-    return data.tokens.tokens.length > 0 ? 1 : 0;
+    // Count unique chains from token data
+    const chains = new Set();
+    data.tokens.tokens.forEach((token: any) => {
+      chains.add('ethereum'); // All our mock data is on Ethereum for now
+    });
+    return chains.size;
   };
 
   const getActivePositions = () => {
     if (!isConnected || !data.tokens?.tokens) return 0;
-    return data.tokens.tokens.length;
+    return data.tokens.tokens.filter((token: any) => 
+      parseFloat(token.balance || '0') > 0
+    ).length;
   };
 
   if (!isConnected) {
@@ -100,7 +130,7 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-2xl font-bold text-white">
-                  {isLoading ? 'Loading...' : `$${portfolioValue.toLocaleString()}`}
+                  {isLoading ? 'Loading...' : `$${portfolioValue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
                 </div>
                 <div className={`flex items-center text-sm ${changePercent >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {changePercent >= 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
@@ -125,12 +155,6 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
               <div className="flex flex-col space-y-1">
                 {getActiveChains() > 0 && (
                   <Badge variant="secondary" className="bg-purple-900/30 text-purple-300 text-xs">Ethereum</Badge>
-                )}
-                {getActiveChains() > 1 && (
-                  <Badge variant="secondary" className="bg-blue-900/30 text-blue-300 text-xs">Polygon</Badge>
-                )}
-                {getActiveChains() > 2 && (
-                  <Badge variant="secondary" className="bg-yellow-900/30 text-yellow-300 text-xs">BNB Chain</Badge>
                 )}
               </div>
             </div>

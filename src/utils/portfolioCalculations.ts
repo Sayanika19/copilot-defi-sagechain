@@ -1,9 +1,11 @@
 
 export interface TransactionData {
   timestamp: string;
-  type: 'buy' | 'sell';
+  type: 'buy' | 'sell' | 'swap';
   amount: string;
   price_usd: string;
+  from_token?: string;
+  to_token?: string;
 }
 
 export interface HistoricalDataPoint {
@@ -35,6 +37,7 @@ export const calculateRealPnLFromWallet = (
   let totalCostBasis = 0;
   let totalSold = 0;
 
+  // Calculate cost basis and realized gains from actual transactions
   transactions.forEach((tx) => {
     const amount = parseFloat(tx.amount || '0');
     const price = parseFloat(tx.price_usd || '0');
@@ -44,13 +47,20 @@ export const calculateRealPnLFromWallet = (
       totalCostBasis += value;
     } else if (tx.type === 'sell') {
       totalSold += value;
+    } else if (tx.type === 'swap') {
+      // For swaps, treat as both a sell and buy
+      totalSold += value * 0.5;
+      totalCostBasis += value * 0.5;
     }
   });
 
-  const realizedPnL = totalSold - totalCostBasis;
-  const unrealizedPnL = currentValue - (totalCostBasis - totalSold);
+  // Calculate P&L
+  const realizedPnL = totalSold - (totalCostBasis * (totalSold / (totalSold + currentValue)));
+  const unrealizedPnL = currentValue - (totalCostBasis - (totalCostBasis * (totalSold / (totalSold + currentValue))));
   const totalPnL = realizedPnL + unrealizedPnL;
-  const totalROI = totalCostBasis > 0 ? ((currentValue + totalSold - totalCostBasis) / totalCostBasis) * 100 : 0;
+  
+  // Calculate ROI
+  const totalROI = totalCostBasis > 0 ? (totalPnL / totalCostBasis) * 100 : 0;
 
   return {
     totalPnL,
@@ -80,24 +90,31 @@ export const generateHistoricalFromRealData = (
     const date = new Date(startDate);
     date.setDate(date.getDate() + i);
 
+    // Get transactions up to this date
     const txUpToDate = sortedTx.filter(tx => new Date(tx.timestamp) <= date);
     
     let costAtDate = 0;
+    let soldAtDate = 0;
+    
     txUpToDate.forEach(tx => {
+      const value = parseFloat(tx.amount || '0') * parseFloat(tx.price_usd || '0');
       if (tx.type === 'buy') {
-        costAtDate += parseFloat(tx.amount || '0') * parseFloat(tx.price_usd || '0');
+        costAtDate += value;
+      } else if (tx.type === 'sell') {
+        soldAtDate += value;
       }
     });
 
+    // Estimate portfolio value at this date
     const progressRatio = i / Math.min(daysDiff, 30);
     const estimatedValue = costAtDate + (currentValue - totalCostBasis) * progressRatio;
-    const pnlAtDate = estimatedValue - costAtDate;
+    const pnlAtDate = estimatedValue - costAtDate + soldAtDate;
 
     points.push({
       date: date.toISOString().split('T')[0],
-      value: Math.round(Math.max(estimatedValue, costAtDate * 0.8)),
+      value: Math.round(Math.max(estimatedValue, costAtDate * 0.5)),
       pnl: Math.round(pnlAtDate),
-      roi: costAtDate > 0 ? ((estimatedValue - costAtDate) / costAtDate) * 100 : 0
+      roi: costAtDate > 0 ? (pnlAtDate / costAtDate) * 100 : 0
     });
   }
 
@@ -134,7 +151,8 @@ export const generateRealPnLBreakdown = (
       }
     });
 
-    const periodRatio = Math.min(days / 365, 1);
+    // Calculate period P&L based on actual transactions and current value
+    const periodRatio = recentTx.length / Math.max(transactions.length, 1);
     const estimatedPeriodValue = currentValue * periodRatio;
     const periodPnL = estimatedPeriodValue - periodCost + periodSold;
 
