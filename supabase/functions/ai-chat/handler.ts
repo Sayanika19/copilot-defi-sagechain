@@ -32,9 +32,10 @@ export const handleChatRequest = async (req: Request): Promise<Response> => {
         const decoder = new TextDecoder();
         const text = decoder.decode(chunk);
         
-        console.log('Raw chunk received:', text.substring(0, 200));
+        console.log('Raw chunk from Gemini:', text);
         
-        // Handle Gemini's streaming format which comes as individual JSON objects
+        // Gemini returns streaming JSON objects, sometimes multiple per chunk
+        // Split by lines and try to parse each as JSON
         const lines = text.split('\n');
         
         for (const line of lines) {
@@ -42,30 +43,31 @@ export const handleChatRequest = async (req: Request): Promise<Response> => {
           if (!trimmedLine) continue;
           
           try {
-            // Parse each JSON response from Gemini
             const jsonResponse = JSON.parse(trimmedLine);
+            console.log('Parsed JSON response:', JSON.stringify(jsonResponse, null, 2));
             
             // Extract text content from Gemini's response structure
             if (jsonResponse.candidates && jsonResponse.candidates.length > 0) {
               const candidate = jsonResponse.candidates[0];
               if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-                const textContent = candidate.content.parts[0].text;
-                if (textContent) {
-                  console.log('Extracted content chunk:', textContent);
+                const part = candidate.content.parts[0];
+                if (part.text) {
+                  console.log('Sending content to frontend:', part.text);
                   // Send the content in server-sent events format
-                  controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: textContent })}\n\n`));
+                  controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: part.text })}\n\n`));
                 }
               }
             }
-          } catch (e) {
-            console.log('Skipping invalid JSON line:', trimmedLine.substring(0, 100));
+          } catch (parseError) {
+            // This is expected for partial JSON or other non-JSON content
+            console.log('Skipping non-JSON line:', trimmedLine.substring(0, 100));
           }
         }
       },
       
       flush(controller) {
         // Send completion signal
-        console.log('Stream flush - sending completion signal');
+        console.log('Stream completed - sending [DONE] signal');
         controller.enqueue(new TextEncoder().encode(`data: [DONE]\n\n`));
       }
     });

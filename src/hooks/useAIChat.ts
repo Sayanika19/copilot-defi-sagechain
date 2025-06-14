@@ -65,7 +65,7 @@ export const useAIChat = () => {
     try {
       const intent = recognizeIntent(currentInput);
       
-      console.log('Sending message to AI chat function for streaming:', {
+      console.log('Sending message to AI chat function:', {
         message: currentInput,
         intent: intent
       });
@@ -101,58 +101,65 @@ export const useAIChat = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('API Error:', response.status, errorText);
-        throw new Error('Failed to get streaming response');
+        throw new Error(`API returned ${response.status}: ${errorText}`);
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) {
+      if (!response.body) {
         throw new Error('No response stream available');
       }
 
+      const reader = response.body.getReader();
       let accumulatedContent = '';
       console.log('Starting to read streaming response...');
 
-      while (true) {
-        const { done, value } = await reader.read();
-        
-        if (done) {
-          console.log('Stream reading completed');
-          break;
-        }
-
-        const chunk = new TextDecoder().decode(value);
-        console.log('Received chunk:', chunk);
-        
-        const lines = chunk.split('\n');
-        
-        for (const line of lines) {
-          if (line.trim() === 'data: [DONE]') {
-            console.log('Stream completed signal received');
-            continue;
-          }
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
           
-          if (line.startsWith('data: ')) {
-            try {
-              const dataStr = line.slice(6).trim();
-              if (dataStr) {
-                const data = JSON.parse(dataStr);
-                if (data.content) {
-                  console.log('Adding content to accumulated text:', data.content);
-                  accumulatedContent += data.content;
-                  
-                  // Update the streaming message with accumulated content
-                  setMessages(prev => prev.map(msg => 
-                    msg.id === aiMessageId 
-                      ? { ...msg, content: accumulatedContent }
-                      : msg
-                  ));
+          if (done) {
+            console.log('Stream reading completed');
+            break;
+          }
+
+          const chunk = new TextDecoder().decode(value);
+          console.log('Frontend received chunk:', chunk);
+          
+          // Split by lines to handle multiple data events in one chunk
+          const lines = chunk.split('\n');
+          
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+            
+            if (trimmedLine === 'data: [DONE]') {
+              console.log('Stream completion signal received');
+              continue;
+            }
+            
+            if (trimmedLine.startsWith('data: ')) {
+              try {
+                const dataStr = trimmedLine.slice(6).trim();
+                if (dataStr) {
+                  const data = JSON.parse(dataStr);
+                  if (data.content) {
+                    console.log('Adding content to message:', data.content);
+                    accumulatedContent += data.content;
+                    
+                    // Update the streaming message with accumulated content
+                    setMessages(prev => prev.map(msg => 
+                      msg.id === aiMessageId 
+                        ? { ...msg, content: accumulatedContent }
+                        : msg
+                    ));
+                  }
                 }
+              } catch (parseError) {
+                console.log('Error parsing data line:', trimmedLine, parseError);
               }
-            } catch (e) {
-              console.log('Skipping invalid JSON in frontend:', line);
             }
           }
         }
+      } finally {
+        reader.releaseLock();
       }
 
       setStreamingMessageId(null);
@@ -168,7 +175,7 @@ export const useAIChat = () => {
       }
 
     } catch (error) {
-      console.error('Unexpected error:', error);
+      console.error('Error in handleSendMessage:', error);
       
       toast({
         title: "Error",
@@ -182,7 +189,7 @@ export const useAIChat = () => {
         return [...filtered, {
           id: (Date.now() + 2).toString(),
           type: 'ai',
-          content: "I'm sorry, I encountered an error while processing your request. Please try again.",
+          content: `I'm sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
           timestamp: new Date(),
         }];
       });
