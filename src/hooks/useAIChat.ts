@@ -124,20 +124,18 @@ export const useAIChat = () => {
           const chunk = new TextDecoder().decode(value);
           console.log('Frontend received chunk:', chunk);
           
-          // Split by lines to handle multiple data events in one chunk
-          const lines = chunk.split('\n');
+          // Process each line in the chunk
+          const lines = chunk.split('\n').filter(line => line.trim());
           
           for (const line of lines) {
-            const trimmedLine = line.trim();
-            
-            if (trimmedLine === 'data: [DONE]') {
+            if (line === 'data: [DONE]') {
               console.log('Stream completion signal received');
               continue;
             }
             
-            if (trimmedLine.startsWith('data: ')) {
+            if (line.startsWith('data: ')) {
               try {
-                const dataStr = trimmedLine.slice(6).trim();
+                const dataStr = line.slice(6).trim();
                 if (dataStr) {
                   const data = JSON.parse(dataStr);
                   if (data.content) {
@@ -153,7 +151,7 @@ export const useAIChat = () => {
                   }
                 }
               } catch (parseError) {
-                console.log('Error parsing data line:', trimmedLine, parseError);
+                console.log('Error parsing data line:', line, parseError);
               }
             }
           }

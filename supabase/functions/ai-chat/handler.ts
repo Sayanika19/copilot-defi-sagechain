@@ -34,16 +34,13 @@ export const handleChatRequest = async (req: Request): Promise<Response> => {
         
         console.log('Raw chunk from Gemini:', text);
         
-        // Gemini returns streaming JSON objects, sometimes multiple per chunk
-        // Split by lines and try to parse each as JSON
-        const lines = text.split('\n');
+        // Process each line in the chunk
+        const lines = text.split('\n').filter(line => line.trim());
         
         for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (!trimmedLine) continue;
-          
           try {
-            const jsonResponse = JSON.parse(trimmedLine);
+            // Try to parse as JSON
+            const jsonResponse = JSON.parse(line);
             console.log('Parsed JSON response:', JSON.stringify(jsonResponse, null, 2));
             
             // Extract text content from Gemini's response structure
@@ -59,8 +56,8 @@ export const handleChatRequest = async (req: Request): Promise<Response> => {
               }
             }
           } catch (parseError) {
-            // This is expected for partial JSON or other non-JSON content
-            console.log('Skipping non-JSON line:', trimmedLine.substring(0, 100));
+            // If it's not valid JSON, skip it
+            console.log('Skipping non-JSON content:', line.substring(0, 100));
           }
         }
       },
