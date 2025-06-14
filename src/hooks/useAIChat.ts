@@ -99,6 +99,8 @@ export const useAIChat = () => {
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error:', response.status, errorText);
         throw new Error('Failed to get streaming response');
       }
 
@@ -118,6 +120,11 @@ export const useAIChat = () => {
         const lines = chunk.split('\n');
         
         for (const line of lines) {
+          if (line.trim() === 'data: [DONE]') {
+            console.log('Stream completed');
+            continue;
+          }
+          
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
@@ -132,7 +139,7 @@ export const useAIChat = () => {
                 ));
               }
             } catch (e) {
-              // Skip invalid JSON
+              console.log('Skipping invalid JSON in frontend:', line);
             }
           }
         }

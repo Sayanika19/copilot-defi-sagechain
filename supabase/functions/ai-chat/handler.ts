@@ -32,29 +32,46 @@ export const handleChatRequest = async (req: Request): Promise<Response> => {
         const decoder = new TextDecoder();
         const text = decoder.decode(chunk);
         
-        // Process each line of the streaming response
-        const lines = text.split('\n');
+        // Split by lines and process each line
+        const lines = text.split('\n').filter(line => line.trim());
+        
         for (const line of lines) {
-          if (line.trim().startsWith('{')) {
-            try {
-              const jsonData = JSON.parse(line.trim());
-              if (jsonData.candidates && jsonData.candidates[0] && jsonData.candidates[0].content) {
-                const content = jsonData.candidates[0].content.parts[0]?.text;
+          // Skip empty lines and non-JSON lines
+          if (!line.trim() || line.trim() === 'data: [DONE]') continue;
+          
+          try {
+            // Try to parse as JSON directly (Gemini format)
+            let jsonData;
+            if (line.startsWith('data: ')) {
+              jsonData = JSON.parse(line.slice(6));
+            } else if (line.trim().startsWith('{')) {
+              jsonData = JSON.parse(line.trim());
+            } else {
+              continue;
+            }
+            
+            // Extract content from Gemini response structure
+            if (jsonData.candidates && jsonData.candidates.length > 0) {
+              const candidate = jsonData.candidates[0];
+              if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+                const content = candidate.content.parts[0].text;
                 if (content) {
+                  console.log('Streaming content chunk:', content);
                   controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content })}\n\n`));
                 }
               }
-            } catch (e) {
-              // Skip invalid JSON lines
-              console.log('Skipping invalid JSON:', line);
             }
+          } catch (e) {
+            console.log('Skipping invalid JSON line:', line.substring(0, 100));
           }
         }
       },
+      
+      flush(controller) {
+        // Send final message to indicate stream completion
+        controller.enqueue(new TextEncoder().encode(`data: [DONE]\n\n`));
+      }
     });
-
-    // Determine if Web3 functionality is required
-    const requiresWeb3 = intent === 'stake_token' || intent === 'swap_token';
 
     return new Response(stream.pipeThrough(transformStream), {
       headers: {
