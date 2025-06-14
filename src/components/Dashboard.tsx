@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, DollarSign, Activity, Zap, Shield } from "lucide-react";
@@ -18,11 +19,52 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
     return `$${(ethAmount * ethPrice).toLocaleString()}`;
   };
 
+  // Calculate active positions based on wallet data
+  const getActivePositions = () => {
+    if (!isConnected || !walletData) return 0;
+    const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
+    // Simulate positions based on balance - more ETH = more positions
+    return Math.min(Math.floor(ethAmount * 2) + 3, 12);
+  };
+
+  // Calculate total rewards based on wallet activity
+  const getTotalRewards = () => {
+    if (!isConnected || !walletData) return "$0.00";
+    const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
+    const rewards = ethAmount * 156.7; // Simulate rewards based on holdings
+    return `$${rewards.toFixed(2)}`;
+  };
+
+  // Calculate risk score based on portfolio
+  const getRiskScore = () => {
+    if (!isConnected || !walletData) return 'N/A';
+    const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
+    if (ethAmount > 5) return 'Low';
+    if (ethAmount > 2) return 'Medium';
+    return 'High';
+  };
+
+  const getRiskDescription = () => {
+    if (!isConnected) return 'Connect wallet';
+    const riskScore = getRiskScore();
+    if (riskScore === 'Low') return 'Well diversified';
+    if (riskScore === 'Medium') return 'Moderate risk';
+    return 'Consider diversifying';
+  };
+
+  const getProtocolCount = () => {
+    if (!isConnected) return 0;
+    return Math.min(Math.floor(getActivePositions() / 2), 6);
+  };
+
   const mockData = {
     totalValue: getPortfolioValue(),
     change24h: "+12.4%",
-    activePositions: isConnected ? 8 : 0,
-    totalRewards: isConnected ? "$1,247.83" : "$0.00"
+    activePositions: getActivePositions(),
+    totalRewards: getTotalRewards(),
+    riskScore: getRiskScore(),
+    riskDescription: getRiskDescription(),
+    protocolCount: getProtocolCount()
   };
 
   return (
@@ -65,7 +107,9 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">{mockData.activePositions}</div>
-            <p className="text-xs text-blue-400 mt-1">{isConnected ? 'Across 4 protocols' : 'Connect wallet to view'}</p>
+            <p className="text-xs text-blue-400 mt-1">
+              {isConnected ? `Across ${mockData.protocolCount} protocols` : 'Connect wallet to view'}
+            </p>
           </CardContent>
         </Card>
 
@@ -86,8 +130,8 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
             <Shield className="h-4 w-4 text-purple-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{isConnected ? 'Medium' : 'N/A'}</div>
-            <p className="text-xs text-purple-400 mt-1">{isConnected ? 'Well diversified' : 'Connect wallet'}</p>
+            <div className="text-2xl font-bold text-white">{mockData.riskScore}</div>
+            <p className="text-xs text-purple-400 mt-1">{mockData.riskDescription}</p>
           </CardContent>
         </Card>
       </div>

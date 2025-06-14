@@ -20,27 +20,85 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
     return ethAmount * ethPrice;
   };
 
+  // Generate realistic assets based on wallet balance
+  const generateAssets = () => {
+    if (!walletData?.balance) return [];
+    
+    const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
+    const portfolioValue = getPortfolioValue();
+    
+    return [
+      { 
+        symbol: 'ETH', 
+        name: 'Ethereum', 
+        balance: ethAmount, 
+        value: portfolioValue * 0.65, 
+        change: 4.2, 
+        chain: 'Ethereum' 
+      },
+      { 
+        symbol: 'USDC', 
+        name: 'USD Coin', 
+        balance: Math.floor(portfolioValue * 0.2), 
+        value: portfolioValue * 0.2, 
+        change: 0.1, 
+        chain: 'Polygon' 
+      },
+      { 
+        symbol: 'AAVE', 
+        name: 'Aave', 
+        balance: Math.floor(portfolioValue * 0.1 / 98.7), 
+        value: portfolioValue * 0.1, 
+        change: -2.1, 
+        chain: 'Ethereum' 
+      },
+      { 
+        symbol: 'UNI', 
+        name: 'Uniswap', 
+        balance: Math.floor(portfolioValue * 0.05 / 12.8), 
+        value: portfolioValue * 0.05, 
+        change: 1.8, 
+        chain: 'Arbitrum' 
+      },
+    ];
+  };
+
+  // Generate DeFi positions based on assets
+  const generateDefiPositions = () => {
+    if (!isConnected) return [];
+    
+    const portfolioValue = getPortfolioValue();
+    return [
+      { 
+        protocol: 'Aave V3', 
+        type: 'Lending', 
+        asset: 'USDC', 
+        amount: Math.floor(portfolioValue * 0.15), 
+        apy: 4.2, 
+        chain: 'Polygon' 
+      },
+      { 
+        protocol: 'Uniswap V3', 
+        type: 'LP', 
+        asset: 'ETH/USDC', 
+        amount: Math.floor(portfolioValue * 0.25), 
+        apy: 12.5, 
+        chain: 'Ethereum' 
+      },
+    ];
+  };
+
   const mockPortfolio = {
     totalValue: getPortfolioValue(),
     change24h: 324.12,
     changePercent: 2.65,
-    assets: [
-      { 
-        symbol: 'ETH', 
-        name: 'Ethereum', 
-        balance: walletData ? parseFloat(walletData.balance.replace(' ETH', '')) : 0, 
-        value: getPortfolioValue() * 0.65, 
-        change: 4.2, 
-        chain: 'Ethereum' 
-      },
-      { symbol: 'USDC', name: 'USD Coin', balance: 2500, value: 2500.00, change: 0.1, chain: 'Polygon' },
-      { symbol: 'AAVE', name: 'Aave', balance: 12.5, value: 1234.56, change: -2.1, chain: 'Ethereum' },
-      { symbol: 'UNI', name: 'Uniswap', balance: 45.2, value: 578.15, change: 1.8, chain: 'Arbitrum' },
-    ],
-    defiPositions: [
-      { protocol: 'Aave V3', type: 'Lending', asset: 'USDC', amount: 1500, apy: 4.2, chain: 'Polygon' },
-      { protocol: 'Uniswap V3', type: 'LP', asset: 'ETH/USDC', amount: 2340, apy: 12.5, chain: 'Ethereum' },
-    ]
+    assets: generateAssets(),
+    defiPositions: generateDefiPositions()
+  };
+
+  const getActiveChains = () => {
+    if (!isConnected) return 0;
+    return mockPortfolio.assets.length > 0 ? 4 : 0;
   };
 
   if (!isConnected) {
@@ -108,7 +166,7 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-2xl font-bold text-white">4</div>
+                <div className="text-2xl font-bold text-white">{getActiveChains()}</div>
                 <div className="text-sm text-purple-300">Networks Connected</div>
               </div>
               <div className="flex flex-col space-y-1">
@@ -163,7 +221,7 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
                 
                 <div className="text-right">
                   <div className="text-white font-medium">${asset.value.toLocaleString()}</div>
-                  <div className="text-sm text-slate-400">{asset.balance} {asset.symbol}</div>
+                  <div className="text-sm text-slate-400">{asset.balance.toFixed(4)} {asset.symbol}</div>
                 </div>
                 
                 <div className={`text-right ${asset.change > 0 ? 'text-green-400' : 'text-red-400'}`}>

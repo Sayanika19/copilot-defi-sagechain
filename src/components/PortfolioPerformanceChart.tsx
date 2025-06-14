@@ -10,31 +10,40 @@ const chartConfig = {
   },
 };
 
-const generateMockData = () => {
-  const data = [];
-  const startDate = new Date('2025-05-17');
-  const endDate = new Date('2025-06-14');
-  
-  let currentValue = 10000;
-  
-  for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
-    // Add some volatility to the data
-    const change = (Math.random() - 0.5) * 1000;
-    currentValue = Math.max(8000, Math.min(16000, currentValue + change));
-    
-    data.push({
-      date: date.toISOString().split('T')[0],
-      value: Math.round(currentValue),
-      displayDate: date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })
-    });
-  }
-  
-  return data;
-};
+// Static data for portfolio performance
+const staticPortfolioData = [
+  { date: '2025-05-17', value: 10000, displayDate: '5/17/2025' },
+  { date: '2025-05-18', value: 10250, displayDate: '5/18/2025' },
+  { date: '2025-05-19', value: 10150, displayDate: '5/19/2025' },
+  { date: '2025-05-20', value: 10400, displayDate: '5/20/2025' },
+  { date: '2025-05-21', value: 10600, displayDate: '5/21/2025' },
+  { date: '2025-05-22', value: 10350, displayDate: '5/22/2025' },
+  { date: '2025-05-23', value: 10800, displayDate: '5/23/2025' },
+  { date: '2025-05-24', value: 11200, displayDate: '5/24/2025' },
+  { date: '2025-05-25', value: 10950, displayDate: '5/25/2025' },
+  { date: '2025-05-26', value: 11400, displayDate: '5/26/2025' },
+  { date: '2025-05-27', value: 11650, displayDate: '5/27/2025' },
+  { date: '2025-05-28', value: 11300, displayDate: '5/28/2025' },
+  { date: '2025-05-29', value: 11800, displayDate: '5/29/2025' },
+  { date: '2025-05-30', value: 12100, displayDate: '5/30/2025' },
+  { date: '2025-05-31', value: 11850, displayDate: '5/31/2025' },
+  { date: '2025-06-01', value: 12300, displayDate: '6/1/2025' },
+  { date: '2025-06-02', value: 12550, displayDate: '6/2/2025' },
+  { date: '2025-06-03', value: 12200, displayDate: '6/3/2025' },
+  { date: '2025-06-04', value: 12700, displayDate: '6/4/2025' },
+  { date: '2025-06-05', value: 12950, displayDate: '6/5/2025' },
+  { date: '2025-06-06', value: 12600, displayDate: '6/6/2025' },
+  { date: '2025-06-07', value: 13100, displayDate: '6/7/2025' },
+  { date: '2025-06-08', value: 13350, displayDate: '6/8/2025' },
+  { date: '2025-06-09', value: 13000, displayDate: '6/9/2025' },
+  { date: '2025-06-10', value: 13500, displayDate: '6/10/2025' },
+  { date: '2025-06-11', value: 13750, displayDate: '6/11/2025' },
+  { date: '2025-06-12', value: 13400, displayDate: '6/12/2025' },
+  { date: '2025-06-13', value: 13900, displayDate: '6/13/2025' },
+  { date: '2025-06-14', value: 14200, displayDate: '6/14/2025' },
+];
 
 const PortfolioPerformanceChart = () => {
-  const data = generateMockData();
-
   return (
     <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
       <CardHeader>
@@ -42,7 +51,7 @@ const PortfolioPerformanceChart = () => {
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+          <AreaChart data={staticPortfolioData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="hsl(260, 100%, 80%)" stopOpacity={0.8}/>
