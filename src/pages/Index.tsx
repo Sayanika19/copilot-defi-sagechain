@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,14 +19,21 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const handleWalletConnect = (data: WalletData) => {
+    console.log('Wallet connected:', data);
     setIsWalletConnected(true);
     setWalletData(data);
   };
 
   const handleWalletDisconnect = () => {
+    console.log('Wallet disconnected');
     setIsWalletConnected(false);
     setWalletData(null);
   };
+
+  // Force re-render when wallet state changes
+  useEffect(() => {
+    console.log('Wallet state changed:', { isWalletConnected, walletData });
+  }, [isWalletConnected, walletData]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">

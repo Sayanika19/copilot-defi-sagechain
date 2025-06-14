@@ -1,9 +1,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, DollarSign, Activity, Zap, Shield } from "lucide-react";
-import { WalletData } from "./WalletConnector";
+import { TrendingUp, TrendingDown, DollarSign, Users, Activity, Zap, Shield, Brain } from "lucide-react";
 import PortfolioPerformanceChart from "./PortfolioPerformanceChart";
+import { WalletData } from "./WalletConnector";
 
 interface DashboardProps {
   isConnected: boolean;
@@ -11,263 +11,220 @@ interface DashboardProps {
 }
 
 const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
-  // Calculate portfolio value from wallet balance
+  // Calculate portfolio value based on wallet data
   const getPortfolioValue = () => {
-    if (!walletData?.balance || !isConnected) return "$0.00";
+    if (!walletData?.balance || !isConnected) return 12500;
     const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
     const ethPrice = 2800; // Mock ETH price
-    return `$${(ethAmount * ethPrice).toLocaleString()}`;
+    return Math.round(ethAmount * ethPrice);
   };
 
-  // Calculate active positions based on wallet data
-  const getActivePositions = () => {
-    if (!isConnected || !walletData) return 0;
-    const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
-    // Real calculation: more ETH = more positions
-    return Math.min(Math.floor(ethAmount * 2) + 1, 8);
-  };
-
-  // Calculate total rewards based on wallet activity
-  const getTotalRewards = () => {
-    if (!isConnected || !walletData) return "$0.00";
-    const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
-    const rewards = ethAmount * 45.2; // Based on actual holdings
-    return `$${rewards.toFixed(2)}`;
-  };
-
-  // Calculate risk score based on portfolio
-  const getRiskScore = () => {
-    if (!isConnected || !walletData) return 'N/A';
-    const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
-    if (ethAmount > 5) return 'Low';
-    if (ethAmount > 2) return 'Medium';
-    return 'High';
-  };
-
-  const getRiskDescription = () => {
-    if (!isConnected) return 'Connect wallet';
-    const riskScore = getRiskScore();
-    if (riskScore === 'Low') return 'Well diversified';
-    if (riskScore === 'Medium') return 'Moderate risk';
-    return 'Consider diversifying';
-  };
-
-  const getProtocolCount = () => {
-    if (!isConnected) return 0;
-    return Math.min(Math.floor(getActivePositions() / 2), 4);
-  };
-
-  // Generate real transactions based on wallet
-  const getRecentTransactions = () => {
-    if (!isConnected || !walletData) return [];
-    
-    const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
-    const transactions = [];
-    
-    if (ethAmount > 0) {
-      transactions.push({
-        action: `Supplied ${(ethAmount * 0.3).toFixed(4)} ETH`,
-        amount: `$${(ethAmount * 0.3 * 2800).toFixed(2)}`,
-        protocol: 'Aave',
-        time: '2 hours ago',
-        type: 'supply'
-      });
-    }
-    
-    if (ethAmount > 1) {
-      transactions.push({
-        action: 'Claimed rewards',
-        amount: `$${(ethAmount * 12.5).toFixed(2)}`,
-        protocol: 'Compound',
-        time: '1 day ago',
-        type: 'reward'
-      });
-    }
-    
-    if (ethAmount > 0.5) {
-      transactions.push({
-        action: `Swapped ${(ethAmount * 0.2).toFixed(4)} ETH → USDT`,
-        amount: `$${(ethAmount * 0.2 * 2800).toFixed(2)}`,
-        protocol: 'Uniswap',
-        time: '2 days ago',
-        type: 'swap'
-      });
-    }
-    
-    return transactions;
-  };
-
-  const mockData = {
-    totalValue: getPortfolioValue(),
-    change24h: isConnected ? "+12.4%" : "0%",
-    activePositions: getActivePositions(),
-    totalRewards: getTotalRewards(),
-    riskScore: getRiskScore(),
-    riskDescription: getRiskDescription(),
-    protocolCount: getProtocolCount(),
-    recentTransactions: getRecentTransactions()
-  };
+  const portfolioValue = getPortfolioValue();
+  const portfolioChange = isConnected ? ((portfolioValue - 10000) / 10000 * 100) : 8.5;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-white mb-2">Dashboard</h2>
-        <p className="text-purple-300">Overview of your DeFi portfolio and activities</p>
-        {isConnected && walletData && (
-          <div className="mt-2 p-3 bg-purple-900/20 rounded-lg border border-purple-800/30">
-            <p className="text-sm text-purple-300">
-              Connected: <span className="text-white font-mono">{walletData.address}</span>
-            </p>
-            <p className="text-sm text-purple-300">
-              Balance: <span className="text-green-400 font-medium">{walletData.balance}</span>
-            </p>
-          </div>
-        )}
+      {/* Welcome Section */}
+      <div className="text-center space-y-4">
+        <h2 className="text-3xl font-bold text-white">
+          Welcome to SageChain
+          {isConnected && walletData && (
+            <span className="block text-lg font-normal text-purple-300 mt-2">
+              Connected: {walletData.address.slice(0, 6)}...{walletData.address.slice(-4)}
+            </span>
+          )}
+        </h2>
+        <p className="text-purple-300 max-w-2xl mx-auto">
+          Your AI-powered multi-chain DeFi companion. Optimize your portfolio, simulate strategies, and make informed decisions across multiple blockchains.
+        </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-300">Total Portfolio Value</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-400" />
+          <CardHeader className="pb-2">
+            <CardDescription className="text-purple-300">Portfolio Value</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{mockData.totalValue}</div>
-            <p className="text-xs text-green-400 flex items-center mt-1">
-              <TrendingUp className="w-3 h-3 mr-1" />
-              {mockData.change24h} from yesterday
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-white">
+                  ${portfolioValue.toLocaleString()}
+                </div>
+                <div className={`flex items-center text-sm ${portfolioChange > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {portfolioChange > 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
+                  {Math.abs(portfolioChange).toFixed(1)}%
+                </div>
+              </div>
+              <DollarSign className="w-8 h-8 text-purple-400" />
+            </div>
           </CardContent>
         </Card>
 
         <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-300">Active Positions</CardTitle>
-            <Activity className="h-4 w-4 text-blue-400" />
+          <CardHeader className="pb-2">
+            <CardDescription className="text-purple-300">Active Positions</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{mockData.activePositions}</div>
-            <p className="text-xs text-blue-400 mt-1">
-              {isConnected ? `Across ${mockData.protocolCount} protocols` : 'Connect wallet to view'}
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-white">{isConnected ? '7' : '0'}</div>
+                <div className="text-sm text-green-400">+2 this week</div>
+              </div>
+              <Activity className="w-8 h-8 text-purple-400" />
+            </div>
           </CardContent>
         </Card>
 
         <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-300">Total Rewards</CardTitle>
-            <Zap className="h-4 w-4 text-yellow-400" />
+          <CardHeader className="pb-2">
+            <CardDescription className="text-purple-300">AI Recommendations</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{mockData.totalRewards}</div>
-            <p className="text-xs text-yellow-400 mt-1">This month</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-white">3</div>
+                <div className="text-sm text-blue-400">New insights</div>
+              </div>
+              <Brain className="w-8 h-8 text-purple-400" />
+            </div>
           </CardContent>
         </Card>
 
         <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-300">Risk Score</CardTitle>
-            <Shield className="h-4 w-4 text-purple-400" />
+          <CardHeader className="pb-2">
+            <CardDescription className="text-purple-300">Risk Score</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{mockData.riskScore}</div>
-            <p className="text-xs text-purple-400 mt-1">{mockData.riskDescription}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-white">Medium</div>
+                <div className="text-sm text-yellow-400">Balanced</div>
+              </div>
+              <Shield className="w-8 h-8 text-purple-400" />
+            </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Portfolio Performance Chart */}
-      <PortfolioPerformanceChart />
+      <PortfolioPerformanceChart walletData={walletData} isConnected={isConnected} />
 
-      {/* Recent Activity */}
+      {/* Quick Actions & Insights */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Quick Actions */}
         <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
           <CardHeader>
-            <CardTitle className="text-white">Recent Transactions</CardTitle>
-            <CardDescription className="text-purple-300">Your latest DeFi activities</CardDescription>
+            <CardTitle className="text-white">Quick Actions</CardTitle>
+            <CardDescription className="text-purple-300">
+              Common DeFi operations
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            {isConnected && mockData.recentTransactions.length > 0 ? (
-              <div className="space-y-4">
-                {mockData.recentTransactions.map((tx, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
-                    <div>
-                      <p className="text-white font-medium">{tx.action}</p>
-                      <p className="text-sm text-purple-300">{tx.protocol} • {tx.time}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className={`font-medium ${
-                        tx.type === 'reward' ? 'text-green-400' : 'text-white'
-                      }`}>{tx.amount}</p>
-                      <Badge variant="outline" className="text-xs border-purple-800/30">
-                        {tx.type}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-purple-300">
-                  {isConnected ? 'No transactions found' : 'Connect your wallet to see transactions'}
-                </p>
-              </div>
-            )}
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <button className="p-4 bg-purple-600/20 border border-purple-600/30 rounded-lg hover:bg-purple-600/30 transition-all">
+                <Zap className="w-6 h-6 text-purple-400 mb-2" />
+                <div className="text-white font-medium text-sm">Swap Tokens</div>
+              </button>
+              <button className="p-4 bg-blue-600/20 border border-blue-600/30 rounded-lg hover:bg-blue-600/30 transition-all">
+                <TrendingUp className="w-6 h-6 text-blue-400 mb-2" />
+                <div className="text-white font-medium text-sm">Add Liquidity</div>
+              </button>
+              <button className="p-4 bg-green-600/20 border border-green-600/30 rounded-lg hover:bg-green-600/30 transition-all">
+                <DollarSign className="w-6 h-6 text-green-400 mb-2" />
+                <div className="text-white font-medium text-sm">Lend Assets</div>
+              </button>
+              <button className="p-4 bg-orange-600/20 border border-orange-600/30 rounded-lg hover:bg-orange-600/30 transition-all">
+                <Activity className="w-6 h-6 text-orange-400 mb-2" />
+                <div className="text-white font-medium text-sm">Stake Tokens</div>
+              </button>
+            </div>
           </CardContent>
         </Card>
 
+        {/* AI Insights */}
         <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
           <CardHeader>
-            <CardTitle className="text-white">Market Opportunities</CardTitle>
-            <CardDescription className="text-purple-300">AI-recommended actions</CardDescription>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Brain className="w-5 h-5 text-purple-400" />
+              AI Insights
+            </CardTitle>
+            <CardDescription className="text-purple-300">
+              Personalized recommendations
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { 
-                  title: 'High Yield Alert', 
-                  description: 'USDC lending on Aave shows 8.2% APY', 
-                  priority: 'high' 
-                },
-                { 
-                  title: 'Arbitrage Opportunity', 
-                  description: 'ETH price difference across DEXs', 
-                  priority: 'medium' 
-                },
-                { 
-                  title: 'Governance Proposal', 
-                  description: 'Vote on Compound proposal #127', 
-                  priority: 'low' 
-                },
-              ].map((opportunity, index) => (
-                <div key={index} className="p-3 bg-slate-800/30 rounded-lg">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <p className="text-white font-medium">{opportunity.title}</p>
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${
-                            opportunity.priority === 'high' 
-                              ? 'border-red-500 text-red-400' 
-                              : opportunity.priority === 'medium'
-                              ? 'border-yellow-500 text-yellow-400'
-                              : 'border-green-500 text-green-400'
-                          }`}
-                        >
-                          {opportunity.priority}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-purple-300 mt-1">{opportunity.description}</p>
-                    </div>
-                  </div>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div className="p-3 bg-purple-900/20 rounded-lg border border-purple-800/30">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-white text-sm font-medium">Portfolio Rebalancing</span>
+                  <Badge className="bg-purple-600/20 text-purple-300">High Priority</Badge>
                 </div>
-              ))}
+                <p className="text-purple-300 text-xs">
+                  Consider diversifying your ETH holdings into stable yield farming opportunities.
+                </p>
+              </div>
+              
+              <div className="p-3 bg-blue-900/20 rounded-lg border border-blue-800/30">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-white text-sm font-medium">Gas Optimization</span>
+                  <Badge className="bg-blue-600/20 text-blue-300">Medium</Badge>
+                </div>
+                <p className="text-blue-300 text-xs">
+                  Current gas fees are 15% below average. Good time for transactions.
+                </p>
+              </div>
+              
+              <div className="p-3 bg-green-900/20 rounded-lg border border-green-800/30">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-white text-sm font-medium">Yield Opportunity</span>
+                  <Badge className="bg-green-600/20 text-green-300">Low Risk</Badge>
+                </div>
+                <p className="text-green-300 text-xs">
+                  AAVE lending pool offering 4.2% APY on USDC with minimal risk.
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Market Overview */}
+      <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
+        <CardHeader>
+          <CardTitle className="text-white">Market Overview</CardTitle>
+          <CardDescription className="text-purple-300">
+            Cross-chain market sentiment and trends
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-400">Bullish</div>
+              <div className="text-sm text-purple-300">Overall Sentiment</div>
+              <div className="mt-2">
+                <Badge className="bg-green-600/20 text-green-300">+12.5%</Badge>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-400">$2,847</div>
+              <div className="text-sm text-purple-300">ETH Price</div>
+              <div className="mt-2">
+                <Badge className="bg-blue-600/20 text-blue-300">+4.2%</Badge>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-400">23 Gwei</div>
+              <div className="text-sm text-purple-300">Average Gas</div>
+              <div className="mt-2">
+                <Badge className="bg-purple-600/20 text-purple-300">Normal</Badge>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
