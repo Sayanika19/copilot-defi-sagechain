@@ -90,7 +90,7 @@ export const useAIChat = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphaG5rbGFsZ25zcGJ0dGJpcHBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MTc2MjcsImV4cCI6MjA2NTQ5MzYyN30.vf-CHPui45M469dAYM4AAsuxVsyjLOk1nFESELTePoY`,
         },
         body: JSON.stringify({
           message: currentInput,
