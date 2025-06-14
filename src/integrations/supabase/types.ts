@@ -127,6 +127,38 @@ export type Database = {
           },
         ]
       }
+      quizzes: {
+        Row: {
+          correct_answer: number
+          id: string
+          module_id: string
+          options: Json
+          question: string
+        }
+        Insert: {
+          correct_answer: number
+          id?: string
+          module_id?: string
+          options: Json
+          question: string
+        }
+        Update: {
+          correct_answer?: number
+          id?: string
+          module_id?: string
+          options?: Json
+          question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quizzes_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: true
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limits: {
         Row: {
           endpoint: string
