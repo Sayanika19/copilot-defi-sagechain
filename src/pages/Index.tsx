@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,14 +6,20 @@ import { Wallet, Brain, TrendingUp, Shield, Zap, BookOpen, Settings, BarChart3, 
 import AIChat from "@/components/AIChat";
 import PortfolioOverview from "@/components/PortfolioOverview";
 import SimulationPanel from "@/components/SimulationPanel";
-import WalletConnector from "@/components/WalletConnector";
+import WalletConnector, { WalletData } from "@/components/WalletConnector";
 import Dashboard from "@/components/Dashboard";
 import EducationHub from "@/components/EducationHub";
 import SettingsPanel from "@/components/SettingsPanel";
 
 const Index = () => {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  const handleWalletConnect = (data: WalletData) => {
+    setIsWalletConnected(true);
+    setWalletData(data);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -71,7 +76,7 @@ const Index = () => {
               </Badge>
               <WalletConnector 
                 isConnected={isWalletConnected} 
-                onConnect={() => setIsWalletConnected(true)} 
+                onConnect={handleWalletConnect} 
               />
             </div>
           </div>
@@ -110,8 +115,8 @@ const Index = () => {
           {/* Main Content */}
           <div className={activeTab === 'aichat' ? 'xl:col-span-3' : 'xl:col-span-4'}>
             {/* Tab Content */}
-            {activeTab === 'dashboard' && <Dashboard isConnected={isWalletConnected} />}
-            {activeTab === 'portfolio' && <PortfolioOverview isConnected={isWalletConnected} />}
+            {activeTab === 'dashboard' && <Dashboard isConnected={isWalletConnected} walletData={walletData} />}
+            {activeTab === 'portfolio' && <PortfolioOverview isConnected={isWalletConnected} walletData={walletData} />}
             {activeTab === 'simulate' && <SimulationPanel />}
             {activeTab === 'education' && <EducationHub />}
             {activeTab === 'settings' && <SettingsPanel />}

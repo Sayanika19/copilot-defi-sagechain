@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,13 @@ import { useToast } from "@/hooks/use-toast";
 
 interface WalletConnectorProps {
   isConnected: boolean;
-  onConnect: () => void;
+  onConnect: (walletData: WalletData) => void;
+}
+
+export interface WalletData {
+  address: string;
+  balance: string;
+  walletType: string;
 }
 
 declare global {
@@ -54,10 +59,15 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
         try {
           const accounts = await window.ethereum.request({ method: 'eth_accounts' });
           if (accounts.length > 0) {
-            setWalletAddress(accounts[0]);
-            await updateBalance(accounts[0]);
+            const address = accounts[0];
+            setWalletAddress(address);
+            const balance = await updateBalance(address);
             setConnectedWalletType('MetaMask');
-            onConnect();
+            onConnect({
+              address,
+              balance,
+              walletType: 'MetaMask'
+            });
           }
         } catch (error) {
           console.error('Error checking wallet connection:', error);
@@ -71,15 +81,21 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
   // Listen for account changes
   useEffect(() => {
     if (typeof window !== 'undefined' && window.ethereum) {
-      const handleAccountsChanged = (accounts: string[]) => {
+      const handleAccountsChanged = async (accounts: string[]) => {
         if (accounts.length === 0) {
           // User disconnected wallet
           setWalletAddress('');
           setWalletBalance('');
           setConnectedWalletType('');
         } else {
-          setWalletAddress(accounts[0]);
-          updateBalance(accounts[0]);
+          const address = accounts[0];
+          setWalletAddress(address);
+          const balance = await updateBalance(address);
+          onConnect({
+            address,
+            balance,
+            walletType: connectedWalletType || 'MetaMask'
+          });
         }
       };
 
@@ -91,9 +107,9 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
         }
       };
     }
-  }, []);
+  }, [connectedWalletType, onConnect]);
 
-  const updateBalance = async (address: string) => {
+  const updateBalance = async (address: string): Promise<string> => {
     try {
       if (typeof window !== 'undefined' && window.ethereum) {
         const balance = await window.ethereum.request({
@@ -103,12 +119,17 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
         
         // Convert from wei to ETH
         const balanceInEth = parseInt(balance, 16) / Math.pow(10, 18);
-        setWalletBalance(`${balanceInEth.toFixed(4)} ETH`);
+        const formattedBalance = `${balanceInEth.toFixed(4)} ETH`;
+        setWalletBalance(formattedBalance);
+        return formattedBalance;
       }
     } catch (error) {
       console.error('Error fetching balance:', error);
-      setWalletBalance('Unable to fetch');
+      const fallbackBalance = 'Unable to fetch';
+      setWalletBalance(fallbackBalance);
+      return fallbackBalance;
     }
+    return '0 ETH';
   };
 
   const connectMetaMask = async () => {
@@ -128,10 +149,15 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
       });
 
       if (accounts.length > 0) {
-        setWalletAddress(accounts[0]);
-        await updateBalance(accounts[0]);
+        const address = accounts[0];
+        setWalletAddress(address);
+        const balance = await updateBalance(address);
         setConnectedWalletType('MetaMask');
-        onConnect();
+        onConnect({
+          address,
+          balance,
+          walletType: 'MetaMask'
+        });
         setIsOpen(false);
         
         toast({
@@ -156,8 +182,6 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
     try {
       setIsConnecting(true);
       
-      // For now, we'll simulate WalletConnect functionality
-      // In a real implementation, you would initialize WalletConnect provider here
       toast({
         title: "WalletConnect",
         description: "Please scan the QR code with your mobile wallet app.",
@@ -166,10 +190,15 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
       // Simulate connection delay
       setTimeout(() => {
         const mockAddress = '0x742d35Cc6B5C73Ff5cb78a3e7B9B6834567f8f3A';
+        const mockBalance = '2.5479 ETH';
         setWalletAddress(mockAddress);
-        setWalletBalance('2.5479 ETH');
+        setWalletBalance(mockBalance);
         setConnectedWalletType('WalletConnect');
-        onConnect();
+        onConnect({
+          address: mockAddress,
+          balance: mockBalance,
+          walletType: 'WalletConnect'
+        });
         setIsOpen(false);
         setIsConnecting(false);
         setSelectedWallet('');

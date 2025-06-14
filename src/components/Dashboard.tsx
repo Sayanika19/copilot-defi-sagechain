@@ -2,17 +2,27 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, DollarSign, Activity, Zap, Shield } from "lucide-react";
+import { WalletData } from "./WalletConnector";
 
 interface DashboardProps {
   isConnected: boolean;
+  walletData?: WalletData | null;
 }
 
-const Dashboard = ({ isConnected }: DashboardProps) => {
+const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
+  // Calculate portfolio value from wallet balance
+  const getPortfolioValue = () => {
+    if (!walletData?.balance) return "$0.00";
+    const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
+    const ethPrice = 2800; // Mock ETH price
+    return `$${(ethAmount * ethPrice).toLocaleString()}`;
+  };
+
   const mockData = {
-    totalValue: "$24,847.32",
+    totalValue: getPortfolioValue(),
     change24h: "+12.4%",
-    activePositions: 8,
-    totalRewards: "$1,247.83"
+    activePositions: isConnected ? 8 : 0,
+    totalRewards: isConnected ? "$1,247.83" : "$0.00"
   };
 
   return (
@@ -20,6 +30,16 @@ const Dashboard = ({ isConnected }: DashboardProps) => {
       <div>
         <h2 className="text-3xl font-bold text-white mb-2">Dashboard</h2>
         <p className="text-purple-300">Overview of your DeFi portfolio and activities</p>
+        {isConnected && walletData && (
+          <div className="mt-2 p-3 bg-purple-900/20 rounded-lg border border-purple-800/30">
+            <p className="text-sm text-purple-300">
+              Connected: <span className="text-white font-mono">{walletData.address}</span>
+            </p>
+            <p className="text-sm text-purple-300">
+              Balance: <span className="text-green-400 font-medium">{walletData.balance}</span>
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -30,7 +50,7 @@ const Dashboard = ({ isConnected }: DashboardProps) => {
             <DollarSign className="h-4 w-4 text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{isConnected ? mockData.totalValue : '$0.00'}</div>
+            <div className="text-2xl font-bold text-white">{mockData.totalValue}</div>
             <p className="text-xs text-green-400 flex items-center mt-1">
               <TrendingUp className="w-3 h-3 mr-1" />
               {isConnected ? mockData.change24h : '0%'} from yesterday
@@ -44,8 +64,8 @@ const Dashboard = ({ isConnected }: DashboardProps) => {
             <Activity className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{isConnected ? mockData.activePositions : 0}</div>
-            <p className="text-xs text-blue-400 mt-1">Across 4 protocols</p>
+            <div className="text-2xl font-bold text-white">{mockData.activePositions}</div>
+            <p className="text-xs text-blue-400 mt-1">{isConnected ? 'Across 4 protocols' : 'Connect wallet to view'}</p>
           </CardContent>
         </Card>
 
@@ -55,7 +75,7 @@ const Dashboard = ({ isConnected }: DashboardProps) => {
             <Zap className="h-4 w-4 text-yellow-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{isConnected ? mockData.totalRewards : '$0.00'}</div>
+            <div className="text-2xl font-bold text-white">{mockData.totalRewards}</div>
             <p className="text-xs text-yellow-400 mt-1">This month</p>
           </CardContent>
         </Card>
@@ -66,8 +86,8 @@ const Dashboard = ({ isConnected }: DashboardProps) => {
             <Shield className="h-4 w-4 text-purple-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">Medium</div>
-            <p className="text-xs text-purple-400 mt-1">Well diversified</p>
+            <div className="text-2xl font-bold text-white">{isConnected ? 'Medium' : 'N/A'}</div>
+            <p className="text-xs text-purple-400 mt-1">{isConnected ? 'Well diversified' : 'Connect wallet'}</p>
           </CardContent>
         </Card>
       </div>

@@ -3,18 +3,35 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp, TrendingDown, Wallet, DollarSign, PieChart, AlertTriangle } from "lucide-react";
+import { WalletData } from "./WalletConnector";
 
 interface PortfolioOverviewProps {
   isConnected: boolean;
+  walletData?: WalletData | null;
 }
 
-const PortfolioOverview = ({ isConnected }: PortfolioOverviewProps) => {
+const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) => {
+  // Calculate values based on real wallet data
+  const getPortfolioValue = () => {
+    if (!walletData?.balance) return 0;
+    const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
+    const ethPrice = 2800; // Mock ETH price
+    return ethAmount * ethPrice;
+  };
+
   const mockPortfolio = {
-    totalValue: 12547.83,
+    totalValue: getPortfolioValue(),
     change24h: 324.12,
     changePercent: 2.65,
     assets: [
-      { symbol: 'ETH', name: 'Ethereum', balance: 3.245, value: 8234.12, change: 4.2, chain: 'Ethereum' },
+      { 
+        symbol: 'ETH', 
+        name: 'Ethereum', 
+        balance: walletData ? parseFloat(walletData.balance.replace(' ETH', '')) : 0, 
+        value: getPortfolioValue() * 0.65, 
+        change: 4.2, 
+        chain: 'Ethereum' 
+      },
       { symbol: 'USDC', name: 'USD Coin', balance: 2500, value: 2500.00, change: 0.1, chain: 'Polygon' },
       { symbol: 'AAVE', name: 'Aave', balance: 12.5, value: 1234.56, change: -2.1, chain: 'Ethereum' },
       { symbol: 'UNI', name: 'Uniswap', balance: 45.2, value: 578.15, change: 1.8, chain: 'Arbitrum' },
@@ -43,6 +60,24 @@ const PortfolioOverview = ({ isConnected }: PortfolioOverviewProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Wallet Info Header */}
+      {walletData && (
+        <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-purple-300">Connected Wallet</p>
+                <p className="text-white font-mono">{walletData.address}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-purple-300">Native Balance</p>
+                <p className="text-white font-medium">{walletData.balance}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Portfolio Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
