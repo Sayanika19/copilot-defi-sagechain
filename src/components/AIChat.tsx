@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Brain, User, Sparkles } from "lucide-react";
+import { Send, Brain, User, Sparkles, AlertTriangle } from "lucide-react";
 import OpenAI from "openai";
 
 interface Message {
@@ -13,6 +13,14 @@ interface Message {
   content: string;
   timestamp: Date;
   action?: string;
+  intent?: string;
+  requiresWeb3?: boolean;
+}
+
+interface Intent {
+  type: string;
+  confidence: number;
+  parameters?: Record<string, any>;
 }
 
 const openai = new OpenAI({
@@ -25,7 +33,7 @@ const AIChat = () => {
     {
       id: '1',
       type: 'ai',
-      content: "Hello! I'm your DeFi AI assistant powered by OpenAI. I can help you swap tokens, check portfolio balance, simulate transactions, and explain DeFi concepts. What would you like to do?",
+      content: "Hello! I'm your DeFi AI assistant. I can help you with portfolio analysis, explain DeFi protocols, guide you through transactions, and answer questions about blockchain technology. How can I assist you today?",
       timestamp: new Date(),
     }
   ]);
@@ -34,10 +42,10 @@ const AIChat = () => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const suggestedActions = [
-    "Swap 100 USDC to ETH",
     "Check my portfolio balance",
-    "Simulate lending on Aave",
-    "Explain yield farming"
+    "What's the safest DeFi protocol?",
+    "How do I stake 100 MATIC?",
+    "Explain yield farming risks"
   ];
 
   useEffect(() => {
@@ -45,6 +53,106 @@ const AIChat = () => {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const recognizeIntent = (input: string): Intent => {
+    const lowercaseInput = input.toLowerCase();
+    
+    // Balance/Portfolio checking
+    if (lowercaseInput.includes('balance') || lowercaseInput.includes('portfolio') || lowercaseInput.includes('check my')) {
+      return { type: 'check_balance', confidence: 0.9 };
+    }
+    
+    // Token swapping
+    if (lowercaseInput.includes('swap') || lowercaseInput.includes('exchange') || lowercaseInput.includes('trade')) {
+      const tokens = extractTokens(input);
+      return { 
+        type: 'swap_token', 
+        confidence: 0.85,
+        parameters: { tokens }
+      };
+    }
+    
+    // Staking
+    if (lowercaseInput.includes('stake') || lowercaseInput.includes('staking')) {
+      const amount = extractAmount(input);
+      const token = extractTokens(input)[0];
+      return { 
+        type: 'stake_token', 
+        confidence: 0.8,
+        parameters: { amount, token }
+      };
+    }
+    
+    // Protocol comparison/safety
+    if (lowercaseInput.includes('safest') || lowercaseInput.includes('best protocol') || lowercaseInput.includes('compare')) {
+      return { type: 'compare_protocols', confidence: 0.7 };
+    }
+    
+    // Explaining concepts
+    if (lowercaseInput.includes('explain') || lowercaseInput.includes('what is') || lowercaseInput.includes('how does')) {
+      return { type: 'explain_concept', confidence: 0.8 };
+    }
+    
+    // General question
+    return { type: 'general_question', confidence: 0.5 };
+  };
+
+  const extractTokens = (input: string): string[] => {
+    const tokenPattern = /\b(ETH|BTC|USDC|USDT|DAI|MATIC|AAVE|UNI|COMP|LINK|DOT|ADA|SOL)\b/gi;
+    return input.match(tokenPattern) || [];
+  };
+
+  const extractAmount = (input: string): string | null => {
+    const amountPattern = /\b(\d+(?:\.\d+)?)\s*(ETH|BTC|USDC|USDT|DAI|MATIC|AAVE|UNI|COMP|LINK|DOT|ADA|SOL)?\b/i;
+    const match = input.match(amountPattern);
+    return match ? match[1] : null;
+  };
+
+  const generateContextualResponse = async (input: string, intent: Intent): Promise<string> => {
+    let systemPrompt = "You are a helpful DeFi AI assistant. ";
+    
+    switch (intent.type) {
+      case 'check_balance':
+        systemPrompt += "The user wants to check their portfolio balance. Ask for their wallet address if not provided, and explain what information you can show them.";
+        break;
+      case 'swap_token':
+        systemPrompt += "The user wants to swap tokens. Provide a step-by-step guide and include important disclaimers about slippage, gas fees, and market volatility.";
+        break;
+      case 'stake_token':
+        systemPrompt += "The user wants to stake tokens. Explain the staking process, rewards, risks, and lock-up periods. Include disclaimers about smart contract risks.";
+        break;
+      case 'compare_protocols':
+        systemPrompt += "The user wants to compare DeFi protocols. Focus on security, TVL, audit history, and risk factors. Be objective and mention that this is not financial advice.";
+        break;
+      case 'explain_concept':
+        systemPrompt += "The user wants to understand a DeFi concept. Provide clear, educational explanations with examples. Break down complex topics into digestible parts.";
+        break;
+      default:
+        systemPrompt += "Provide helpful, accurate information about DeFi and blockchain technology. Be conversational and ask follow-up questions when appropriate.";
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt + " Always be conversational, helpful, and include appropriate disclaimers for financial actions. Keep responses concise but informative."
+        },
+        {
+          role: "user",
+          content: input
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 500,
+    });
+
+    return completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response. Please try again.";
+  };
+
+  const requiresWeb3Action = (intent: Intent): boolean => {
+    return ['swap_token', 'stake_token', 'check_balance'].includes(intent.type);
+  };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -62,31 +170,29 @@ const AIChat = () => {
     setIsLoading(true);
 
     try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "You are a helpful DeFi AI assistant. You specialize in decentralized finance, cryptocurrency trading, yield farming, lending protocols like Aave and Compound, DEXs like Uniswap, and portfolio management. Provide clear, helpful responses about DeFi concepts and strategies. Keep responses concise but informative."
-          },
-          {
-            role: "user",
-            content: currentInput
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 500,
-      });
+      // Recognize intent
+      const intent = recognizeIntent(currentInput);
+      console.log('Detected intent:', intent);
 
-      const aiResponse = completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response. Please try again.";
-      const action = detectAction(currentInput);
+      // Generate contextual response
+      const aiResponse = await generateContextualResponse(currentInput, intent);
+      
+      // Add Web3 disclaimer if needed
+      let finalResponse = aiResponse;
+      const needsWeb3 = requiresWeb3Action(intent);
+      
+      if (needsWeb3) {
+        finalResponse += "\n\n⚠️ **Disclaimer**: This action requires Web3 execution. Please ensure you understand the risks and have sufficient gas fees. Always verify transaction details before confirming.";
+      }
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: aiResponse,
+        content: finalResponse,
         timestamp: new Date(),
-        action: action,
+        action: intent.type,
+        intent: intent.type,
+        requiresWeb3: needsWeb3,
       };
 
       setMessages(prev => [...prev, aiMessage]);
@@ -102,20 +208,6 @@ const AIChat = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const detectAction = (input: string): string | undefined => {
-    const lowercaseInput = input.toLowerCase();
-    
-    if (lowercaseInput.includes('swap') || lowercaseInput.includes('exchange')) {
-      return 'swap';
-    } else if (lowercaseInput.includes('balance') || lowercaseInput.includes('portfolio')) {
-      return 'portfolio';
-    } else if (lowercaseInput.includes('lend') || lowercaseInput.includes('aave') || lowercaseInput.includes('compound')) {
-      return 'lending';
-    }
-    
-    return undefined;
   };
 
   const handleSuggestedAction = (action: string) => {
@@ -154,11 +246,16 @@ const AIChat = () => {
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                  {message.action && (
+                  {message.intent && (
                     <div className="mt-2 pt-2 border-t border-slate-600">
-                      <span className="text-xs text-purple-300">
-                        Action detected: {message.action}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-purple-300">
+                          Intent: {message.intent.replace('_', ' ')}
+                        </span>
+                        {message.requiresWeb3 && (
+                          <AlertTriangle className="w-3 h-3 text-yellow-400" />
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
