@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,11 @@ const Index = () => {
   const handleWalletConnect = (data: WalletData) => {
     setIsWalletConnected(true);
     setWalletData(data);
+  };
+
+  const handleWalletDisconnect = () => {
+    setIsWalletConnected(false);
+    setWalletData(null);
   };
 
   return (
@@ -76,7 +82,8 @@ const Index = () => {
               </Badge>
               <WalletConnector 
                 isConnected={isWalletConnected} 
-                onConnect={handleWalletConnect} 
+                onConnect={handleWalletConnect}
+                onDisconnect={handleWalletDisconnect}
               />
             </div>
           </div>

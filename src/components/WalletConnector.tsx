@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 interface WalletConnectorProps {
   isConnected: boolean;
   onConnect: (walletData: WalletData) => void;
+  onDisconnect?: () => void;
 }
 
 export interface WalletData {
@@ -28,7 +30,7 @@ declare global {
   }
 }
 
-const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
+const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
@@ -243,9 +245,16 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
     setWalletAddress('');
     setWalletBalance('');
     setConnectedWalletType('');
+    setIsOpen(false);
+    
+    // Call the parent's disconnect handler
+    if (onDisconnect) {
+      onDisconnect();
+    }
+    
     toast({
       title: "Wallet Disconnected",
-      description: "Your wallet has been disconnected.",
+      description: "Your wallet has been disconnected successfully.",
     });
   };
 
@@ -256,7 +265,7 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
 
   if (isConnected && walletAddress) {
     return (
-      <Dialog>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" className="border-purple-600 text-purple-400 hover:bg-purple-600/10">
             <Wallet className="w-4 h-4 mr-2" />
@@ -317,7 +326,7 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
               </Button>
               <Button 
                 variant="outline" 
-                className="flex-1 border-red-600 text-red-400"
+                className="flex-1 border-red-600 text-red-400 hover:bg-red-600/10"
                 onClick={disconnectWallet}
               >
                 Disconnect
