@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, Brain, TrendingUp, Shield, Zap, BookOpen, Settings, BarChart3, MessageSquare, ArrowLeft, Bell } from "lucide-react";
+import { Wallet, Brain, TrendingUp, Shield, Zap, BookOpen, Settings, BarChart3, MessageSquare, ArrowLeft, Bell, ArrowUpDown } from "lucide-react";
 import AIChat from "@/components/AIChat";
 import PortfolioOverview from "@/components/PortfolioOverview";
 import SimulationPanel from "@/components/SimulationPanel";
@@ -11,6 +11,7 @@ import WalletConnector, { WalletData } from "@/components/WalletConnector";
 import Dashboard from "@/components/Dashboard";
 import EducationHub from "@/components/EducationHub";
 import SettingsPanel from "@/components/SettingsPanel";
+import CryptoTrading from "@/components/CryptoTrading";
 
 const Index = () => {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
@@ -48,6 +49,7 @@ const Index = () => {
                 {[
                   { id: 'aichat', label: 'AI Chat', icon: MessageSquare },
                   { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+                  { id: 'trading', label: 'Trading', icon: ArrowUpDown },
                   { id: 'simulate', label: 'Simulation Panel', icon: Zap },
                   { id: 'portfolio', label: 'Portfolio', icon: TrendingUp },
                   { id: 'education', label: 'Education Hub', icon: BookOpen },
@@ -94,6 +96,7 @@ const Index = () => {
               {[
                 { id: 'aichat', label: 'AI Chat', icon: MessageSquare },
                 { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+                { id: 'trading', label: 'Trading', icon: ArrowUpDown },
                 { id: 'simulate', label: 'Simulate', icon: Zap },
                 { id: 'portfolio', label: 'Portfolio', icon: TrendingUp },
                 { id: 'education', label: 'Education', icon: BookOpen },
@@ -124,6 +127,7 @@ const Index = () => {
             {/* Tab Content */}
             {activeTab === 'dashboard' && <Dashboard isConnected={isWalletConnected} walletData={walletData} />}
             {activeTab === 'portfolio' && <PortfolioOverview isConnected={isWalletConnected} walletData={walletData} />}
+            {activeTab === 'trading' && <CryptoTrading />}
             {activeTab === 'simulate' && <SimulationPanel />}
             {activeTab === 'education' && <EducationHub />}
             {activeTab === 'settings' && <SettingsPanel />}
