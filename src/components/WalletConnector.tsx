@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,9 +87,7 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
       const handleAccountsChanged = async (accounts: string[]) => {
         if (accounts.length === 0) {
           // User disconnected wallet
-          setWalletAddress('');
-          setWalletBalance('');
-          setConnectedWalletType('');
+          disconnectWallet();
         } else {
           const address = accounts[0];
           setWalletAddress(address);
@@ -242,11 +241,14 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
   };
 
   const disconnectWallet = () => {
+    // Reset all wallet-related state
     setWalletAddress('');
     setWalletBalance('');
     setConnectedWalletType('');
     setIsOpen(false);
     setShowDropdown(false);
+    setSelectedWallet('');
+    setIsConnecting(false);
     
     // Call the parent's disconnect handler
     if (onDisconnect) {
