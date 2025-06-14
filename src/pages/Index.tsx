@@ -3,15 +3,18 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, Brain, TrendingUp, Shield, Zap, BookOpen } from "lucide-react";
+import { Wallet, Brain, TrendingUp, Shield, Zap, BookOpen, Settings, BarChart3, MessageSquare, ArrowLeft, Bell } from "lucide-react";
 import AIChat from "@/components/AIChat";
 import PortfolioOverview from "@/components/PortfolioOverview";
 import SimulationPanel from "@/components/SimulationPanel";
 import WalletConnector from "@/components/WalletConnector";
+import Dashboard from "@/components/Dashboard";
+import EducationHub from "@/components/EducationHub";
+import SettingsPanel from "@/components/SettingsPanel";
 
 const Index = () => {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
-  const [activeTab, setActiveTab] = useState('portfolio');
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -19,17 +22,49 @@ const Index = () => {
       <header className="border-b border-purple-800/30 bg-black/20 backdrop-blur-xl">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                <Brain className="w-6 h-6 text-white" />
+            <div className="flex items-center space-x-8">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                  <Brain className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-white">SageChain</h1>
+                </div>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">SageChain</h1>
-                <p className="text-sm text-purple-300">AI-Powered DeFi Copilot</p>
-              </div>
+
+              {/* Navigation Menu */}
+              <nav className="hidden lg:flex items-center space-x-6">
+                {[
+                  { id: 'aichat', label: 'AI Chat', icon: MessageSquare },
+                  { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+                  { id: 'simulate', label: 'Simulation Panel', icon: Zap },
+                  { id: 'portfolio', label: 'Portfolio', icon: TrendingUp },
+                  { id: 'education', label: 'Education Hub', icon: BookOpen },
+                  { id: 'settings', label: 'Settings', icon: Settings },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                      activeTab === item.id
+                        ? 'bg-purple-600/20 text-purple-300 border border-purple-600/30'
+                        : 'text-gray-300 hover:text-white hover:bg-purple-800/20'
+                    }`}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    <span className="font-medium">{item.label}</span>
+                  </button>
+                ))}
+              </nav>
             </div>
             
             <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="icon" className="text-purple-300 hover:text-white">
+                <Bell className="w-5 h-5" />
+                <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                  <span className="text-xs text-white">2</span>
+                </div>
+              </Button>
               <Badge variant="secondary" className="bg-green-500/20 text-green-400 hover:bg-green-500/30">
                 <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
                 Multi-Chain Active
@@ -40,103 +75,87 @@ const Index = () => {
               />
             </div>
           </div>
-        </div>
-      </header>
 
-      <div className="container mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-          {/* Main Content */}
-          <div className="xl:col-span-3">
-            {/* Navigation Tabs */}
-            <div className="flex space-x-1 mb-8 bg-black/20 backdrop-blur-xl rounded-lg p-1">
+          {/* Mobile Navigation */}
+          <nav className="lg:hidden mt-4">
+            <div className="flex space-x-1 bg-black/20 backdrop-blur-xl rounded-lg p-1 overflow-x-auto">
               {[
-                { id: 'portfolio', label: 'Portfolio', icon: TrendingUp },
+                { id: 'aichat', label: 'AI Chat', icon: MessageSquare },
+                { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
                 { id: 'simulate', label: 'Simulate', icon: Zap },
-                { id: 'learn', label: 'Learn', icon: BookOpen },
+                { id: 'portfolio', label: 'Portfolio', icon: TrendingUp },
+                { id: 'education', label: 'Education', icon: BookOpen },
+                { id: 'settings', label: 'Settings', icon: Settings },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 px-6 py-3 rounded-md transition-all duration-200 ${
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25'
                       : 'text-purple-300 hover:text-white hover:bg-purple-800/30'
                   }`}
                 >
                   <tab.icon className="w-4 h-4" />
-                  <span className="font-medium">{tab.label}</span>
+                  <span className="font-medium text-sm">{tab.label}</span>
                 </button>
               ))}
             </div>
+          </nav>
+        </div>
+      </header>
 
+      <div className="container mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+          {/* Main Content */}
+          <div className={activeTab === 'aichat' ? 'xl:col-span-3' : 'xl:col-span-4'}>
             {/* Tab Content */}
+            {activeTab === 'dashboard' && <Dashboard isConnected={isWalletConnected} />}
             {activeTab === 'portfolio' && <PortfolioOverview isConnected={isWalletConnected} />}
             {activeTab === 'simulate' && <SimulationPanel />}
-            {activeTab === 'learn' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {activeTab === 'education' && <EducationHub />}
+            {activeTab === 'settings' && <SettingsPanel />}
+            {activeTab === 'aichat' && (
+              <div className="space-y-6">
+                <div className="flex items-center space-x-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setActiveTab('dashboard')}
+                    className="text-purple-300 hover:text-white"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Home
+                  </Button>
+                </div>
                 <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
-                      <BookOpen className="w-5 h-5 text-purple-400" />
-                      DeFi Basics
+                      <MessageSquare className="w-5 h-5 text-purple-400" />
+                      AI Chat Assistant
                     </CardTitle>
                     <CardDescription className="text-purple-300">
-                      Learn the fundamentals of decentralized finance
+                      Get personalized DeFi insights and trading recommendations
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="p-3 bg-purple-900/30 rounded-lg">
-                        <h4 className="text-white font-medium">What is DeFi?</h4>
-                        <p className="text-sm text-purple-300 mt-1">
-                          Decentralized Finance reimagines traditional banking on blockchain
-                        </p>
-                      </div>
-                      <div className="p-3 bg-blue-900/30 rounded-lg">
-                        <h4 className="text-white font-medium">Yield Farming</h4>
-                        <p className="text-sm text-blue-300 mt-1">
-                          Earn rewards by providing liquidity to protocols
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <Shield className="w-5 h-5 text-blue-400" />
-                      Security Guide
-                    </CardTitle>
-                    <CardDescription className="text-purple-300">
-                      Best practices for safe DeFi interactions
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="p-3 bg-green-900/30 rounded-lg">
-                        <h4 className="text-white font-medium">Wallet Security</h4>
-                        <p className="text-sm text-green-300 mt-1">
-                          Always verify contract addresses and use hardware wallets
-                        </p>
-                      </div>
-                      <div className="p-3 bg-orange-900/30 rounded-lg">
-                        <h4 className="text-white font-medium">Smart Contract Risk</h4>
-                        <p className="text-sm text-orange-300 mt-1">
-                          Understand audit reports and protocol risks
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
                 </Card>
               </div>
             )}
           </div>
 
-          {/* AI Chat Sidebar */}
-          <div className="xl:col-span-1">
-            <AIChat />
-          </div>
+          {/* AI Chat Sidebar - only show when not in full AI Chat mode */}
+          {activeTab !== 'aichat' && (
+            <div className="xl:col-span-1">
+              <AIChat />
+            </div>
+          )}
+
+          {/* Full AI Chat when in AI Chat mode */}
+          {activeTab === 'aichat' && (
+            <div className="xl:col-span-1">
+              <AIChat />
+            </div>
+          )}
         </div>
       </div>
     </div>
