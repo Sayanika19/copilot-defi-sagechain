@@ -117,8 +117,9 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
           params: [address, 'latest']
         });
         
-        // Convert from wei to ETH
-        const balanceInEth = parseInt(balance, 16) / Math.pow(10, 18);
+        // Convert from wei to ETH using native JavaScript
+        const balanceInWei = parseInt(balance, 16);
+        const balanceInEth = balanceInWei / Math.pow(10, 18);
         const formattedBalance = `${balanceInEth.toFixed(4)} ETH`;
         setWalletBalance(formattedBalance);
         return formattedBalance;
@@ -187,7 +188,7 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
         description: "Please scan the QR code with your mobile wallet app.",
       });
 
-      // Simulate connection delay
+      // Simulate connection delay for WalletConnect
       setTimeout(() => {
         const mockAddress = '0x742d35Cc6B5C73Ff5cb78a3e7B9B6834567f8f3A';
         const mockBalance = '2.5479 ETH';
