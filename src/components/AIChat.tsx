@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -101,8 +102,13 @@ const AIChat = () => {
         message: currentInput,
         conversationId: conversationId,
         intent: intent,
-        user: session.user?.email
+        user: session.user?.email,
+        sessionValid: !!session.access_token
       });
+
+      if (!session.access_token) {
+        throw new Error('No valid session token available');
+      }
       
       // Call the secure Edge Function with proper authorization
       const { data, error } = await supabase.functions.invoke('ai-chat', {
@@ -112,7 +118,8 @@ const AIChat = () => {
           intent: intent
         },
         headers: {
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
         }
       });
 
@@ -122,12 +129,15 @@ const AIChat = () => {
         console.error('Error calling AI chat function:', error);
         
         let errorMessage = "I'm sorry, I encountered an error while processing your request.";
+        
         if (error.message?.includes('Rate limit exceeded')) {
           errorMessage = "You've reached the rate limit. Please try again in an hour.";
-        } else if (error.message?.includes('Invalid user')) {
+        } else if (error.message?.includes('Invalid user') || error.message?.includes('authentication')) {
           errorMessage = "Authentication error. Please try signing out and back in.";
         } else if (error.message?.includes('OpenAI API key not configured')) {
           errorMessage = "AI service is currently unavailable. Please try again later.";
+        } else if (error.message?.includes('Failed to get AI response')) {
+          errorMessage = "The AI service is temporarily unavailable. Please try again.";
         }
 
         toast({
@@ -147,18 +157,19 @@ const AIChat = () => {
       }
 
       // Update conversation ID if it's a new conversation
-      if (data.conversationId && !conversationId) {
+      if (data?.conversationId && !conversationId) {
         setConversationId(data.conversationId);
+        console.log('New conversation ID set:', data.conversationId);
       }
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: data.response,
+        content: data?.response || "I apologize, but I couldn't generate a response.",
         timestamp: new Date(),
         action: intent,
         intent: intent,
-        requiresWeb3: data.requiresWeb3,
+        requiresWeb3: data?.requiresWeb3,
       };
 
       setMessages(prev => [...prev, aiMessage]);

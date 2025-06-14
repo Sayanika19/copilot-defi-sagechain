@@ -1,18 +1,13 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface ChatRequest {
-  message: string;
-  conversationId?: string;
-  intent?: string;
-}
-
-Deno.serve(async (req) => {
+serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -21,134 +16,138 @@ Deno.serve(async (req) => {
   try {
     console.log('AI Chat function called');
     
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     console.log('Auth header present:', !!authHeader);
     
     if (!authHeader) {
-      console.error('No authorization header');
-      return new Response(JSON.stringify({ error: 'No authorization header' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      console.error('No authorization header provided');
+      return new Response(
+        JSON.stringify({ error: 'No authorization header provided' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    // Extract the token from the authorization header
+    const token = authHeader.replace('Bearer ', '');
+    console.log('Token extracted:', token.substring(0, 20) + '...');
 
-    // Get the user from the auth header
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    console.log('User auth result:', { user: !!user, error: userError });
+    // Verify the user with the token
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
-    if (userError || !user) {
-      console.error('Invalid user:', userError);
-      return new Response(JSON.stringify({ error: 'Invalid user' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    if (authError || !user) {
+      console.error('Authentication failed:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid user authentication' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
-    console.log('User authenticated:', user.id);
+    console.log('User authenticated:', user.email);
+
+    // Parse request body
+    const { message, conversationId, intent } = await req.json();
+    console.log('Request data:', { message, conversationId, intent, userId: user.id });
+
+    if (!message) {
+      return new Response(
+        JSON.stringify({ error: 'Message is required' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
     // Check rate limiting
-    const now = new Date();
-    const windowStart = new Date(now.getTime() - 60 * 60 * 1000); // 1 hour window
-
-    const { data: rateLimit } = await supabaseClient
-      .from('rate_limits')
-      .select('request_count')
-      .eq('user_id', user.id)
-      .eq('endpoint', 'ai-chat')
-      .gte('window_start', windowStart.toISOString())
-      .single();
-
-    if (rateLimit && rateLimit.request_count >= 50) { // 50 requests per hour
+    const rateLimitResult = await checkRateLimit(supabase, user.id);
+    if (!rateLimitResult.allowed) {
       console.log('Rate limit exceeded for user:', user.id);
-      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
-        status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please try again in an hour.' }),
+        { 
+          status: 429, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
-    // Update rate limiting
-    await supabaseClient
-      .from('rate_limits')
-      .upsert({
-        user_id: user.id,
-        endpoint: 'ai-chat',
-        request_count: (rateLimit?.request_count || 0) + 1,
-        window_start: windowStart.toISOString(),
-      });
-
-    const { message, conversationId, intent }: ChatRequest = await req.json();
-    console.log('Request body:', { message: message.substring(0, 50), conversationId, intent });
-
-    // Create or get conversation
+    // Get or create conversation
     let currentConversationId = conversationId;
     if (!currentConversationId) {
-      const { data: conversation, error: convError } = await supabaseClient
+      console.log('Creating new conversation for user:', user.id);
+      const { data: newConversation, error: conversationError } = await supabase
         .from('conversations')
         .insert({
           user_id: user.id,
-          title: message.substring(0, 50) + (message.length > 50 ? '...' : ''),
+          title: message.substring(0, 50) + (message.length > 50 ? '...' : '')
         })
-        .select('id')
+        .select()
         .single();
 
-      if (convError) {
-        console.error('Error creating conversation:', convError);
-        return new Response(JSON.stringify({ error: 'Failed to create conversation' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+      if (conversationError) {
+        console.error('Error creating conversation:', conversationError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to create conversation' }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
       }
-      currentConversationId = conversation.id;
-      console.log('Created new conversation:', currentConversationId);
+
+      currentConversationId = newConversation.id;
+      console.log('New conversation created:', currentConversationId);
     }
 
-    // Save user message to database
-    await supabaseClient.from('chat_messages').insert({
-      conversation_id: currentConversationId,
-      user_id: user.id,
-      type: 'user',
-      content: message,
-      intent: intent,
-    });
+    // Save user message
+    const { error: messageError } = await supabase
+      .from('chat_messages')
+      .insert({
+        conversation_id: currentConversationId,
+        user_id: user.id,
+        type: 'user',
+        content: message,
+        intent: intent
+      });
 
-    // Call OpenAI API
+    if (messageError) {
+      console.error('Error saving user message:', messageError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to save message' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Get OpenAI API key
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiApiKey) {
       console.error('OpenAI API key not configured');
-      return new Response(JSON.stringify({ error: 'OpenAI API key not configured' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ error: 'OpenAI API key not configured' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
-    // Generate contextual system prompt based on intent
-    let systemPrompt = "You are a helpful DeFi AI assistant. ";
-    const lowercaseMessage = message.toLowerCase();
-    
-    if (lowercaseMessage.includes('balance') || lowercaseMessage.includes('portfolio')) {
-      systemPrompt += "The user wants to check their portfolio balance. Ask for their wallet address if not provided, and explain what information you can show them.";
-    } else if (lowercaseMessage.includes('swap') || lowercaseMessage.includes('exchange')) {
-      systemPrompt += "The user wants to swap tokens. Provide a step-by-step guide and include important disclaimers about slippage, gas fees, and market volatility.";
-    } else if (lowercaseMessage.includes('stake') || lowercaseMessage.includes('staking')) {
-      systemPrompt += "The user wants to stake tokens. Explain the staking process, rewards, risks, and lock-up periods. Include disclaimers about smart contract risks.";
-    } else if (lowercaseMessage.includes('safest') || lowercaseMessage.includes('best protocol')) {
-      systemPrompt += "The user wants to compare DeFi protocols. Focus on security, TVL, audit history, and risk factors. Be objective and mention that this is not financial advice.";
-    } else if (lowercaseMessage.includes('explain') || lowercaseMessage.includes('what is')) {
-      systemPrompt += "The user wants to understand a DeFi concept. Provide clear, educational explanations with examples. Break down complex topics into digestible parts.";
-    } else {
-      systemPrompt += "Provide helpful, accurate information about DeFi and blockchain technology. Be conversational and ask follow-up questions when appropriate.";
-    }
-
-    systemPrompt += " Always be conversational, helpful, and include appropriate disclaimers for financial actions. Keep responses concise but informative.";
-
-    console.log('Calling OpenAI API');
+    // Call OpenAI API
+    console.log('Calling OpenAI API...');
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -156,64 +155,139 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-3.5-turbo',
         messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: message }
+          {
+            role: 'system',
+            content: `You are a helpful DeFi AI assistant specialized in blockchain technology, DeFi protocols, and cryptocurrency. You provide accurate, up-to-date information about:
+            - DeFi protocols and their risks/benefits
+            - Portfolio analysis and recommendations
+            - Blockchain technology explanations
+            - Transaction guidance
+            - Market insights
+            
+            Current user intent: ${intent}
+            
+            Be helpful, informative, and always prioritize user safety when discussing financial matters.`
+          },
+          {
+            role: 'user',
+            content: message
+          }
         ],
-        temperature: 0.7,
         max_tokens: 500,
+        temperature: 0.7,
       }),
     });
 
     if (!openaiResponse.ok) {
       const errorText = await openaiResponse.text();
-      console.error('OpenAI API error:', errorText);
-      return new Response(JSON.stringify({ error: 'OpenAI API error' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      console.error('OpenAI API error:', openaiResponse.status, errorText);
+      return new Response(
+        JSON.stringify({ error: 'Failed to get AI response' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     const openaiData = await openaiResponse.json();
-    const aiResponse = openaiData.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
-
-    // Determine if response requires Web3 action
-    const requiresWeb3 = ['swap', 'stake', 'balance', 'check'].some(keyword => 
-      lowercaseMessage.includes(keyword)
-    );
-
-    // Add Web3 disclaimer if needed
-    let finalResponse = aiResponse;
-    if (requiresWeb3) {
-      finalResponse += "\n\n⚠️ **Disclaimer**: This action requires Web3 execution. Please ensure you understand the risks and have sufficient gas fees. Always verify transaction details before confirming.";
-    }
-
-    // Save AI response to database
-    await supabaseClient.from('chat_messages').insert({
-      conversation_id: currentConversationId,
-      user_id: user.id,
-      type: 'ai',
-      content: finalResponse,
-      intent: intent,
-      requires_web3: requiresWeb3,
-    });
+    const aiMessage = openaiData.choices[0]?.message?.content || 'I apologize, but I could not generate a response at this time.';
 
     console.log('AI response generated successfully');
-    return new Response(JSON.stringify({ 
-      response: finalResponse, 
-      conversationId: currentConversationId,
-      requiresWeb3 
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+
+    // Save AI response
+    const { error: aiMessageError } = await supabase
+      .from('chat_messages')
+      .insert({
+        conversation_id: currentConversationId,
+        user_id: user.id,
+        type: 'ai',
+        content: aiMessage,
+        intent: intent,
+        requires_web3: intent === 'stake_token' || intent === 'swap_token'
+      });
+
+    if (aiMessageError) {
+      console.error('Error saving AI message:', aiMessageError);
+    }
+
+    // Update conversation timestamp
+    await supabase
+      .from('conversations')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', currentConversationId);
+
+    return new Response(
+      JSON.stringify({
+        response: aiMessage,
+        conversationId: currentConversationId,
+        requiresWeb3: intent === 'stake_token' || intent === 'swap_token'
+      }),
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
 
   } catch (error) {
-    console.error('Error in ai-chat function:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Unexpected error in AI chat function:', error);
+    return new Response(
+      JSON.stringify({ error: 'An unexpected error occurred' }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
   }
 });
+
+async function checkRateLimit(supabase: any, userId: string): Promise<{ allowed: boolean }> {
+  try {
+    const windowStart = new Date();
+    windowStart.setHours(windowStart.getHours() - 1);
+
+    // Check current rate limit
+    const { data: rateLimitData, error } = await supabase
+      .from('rate_limits')
+      .select('request_count')
+      .eq('user_id', userId)
+      .eq('endpoint', 'ai-chat')
+      .gte('window_start', windowStart.toISOString())
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('Rate limit check error:', error);
+      return { allowed: true }; // Allow on error to avoid blocking users
+    }
+
+    const currentCount = rateLimitData?.request_count || 0;
+    const limit = 50; // 50 requests per hour
+
+    if (currentCount >= limit) {
+      return { allowed: false };
+    }
+
+    // Update or insert rate limit record
+    const { error: upsertError } = await supabase
+      .from('rate_limits')
+      .upsert({
+        user_id: userId,
+        endpoint: 'ai-chat',
+        request_count: currentCount + 1,
+        window_start: new Date().toISOString()
+      }, {
+        onConflict: 'user_id,endpoint'
+      });
+
+    if (upsertError) {
+      console.error('Rate limit update error:', upsertError);
+    }
+
+    return { allowed: true };
+  } catch (error) {
+    console.error('Rate limit function error:', error);
+    return { allowed: true }; // Allow on error
+  }
+}
