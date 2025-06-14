@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Brain, User, Sparkles } from "lucide-react";
+import OpenAI from "openai";
 
 interface Message {
   id: string;
@@ -14,12 +15,17 @@ interface Message {
   action?: string;
 }
 
+const openai = new OpenAI({
+  apiKey: "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",
+  dangerouslyAllowBrowser: true
+});
+
 const AIChat = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       type: 'ai',
-      content: "Hello! I'm your DeFi AI assistant. I can help you swap tokens, check portfolio balance, simulate transactions, and explain DeFi concepts. What would you like to do?",
+      content: "Hello! I'm your DeFi AI assistant powered by OpenAI. I can help you swap tokens, check portfolio balance, simulate transactions, and explain DeFi concepts. What would you like to do?",
       timestamp: new Date(),
     }
   ]);
@@ -51,51 +57,65 @@ const AIChat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputValue;
     setInputValue('');
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(inputValue);
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful DeFi AI assistant. You specialize in decentralized finance, cryptocurrency trading, yield farming, lending protocols like Aave and Compound, DEXs like Uniswap, and portfolio management. Provide clear, helpful responses about DeFi concepts and strategies. Keep responses concise but informative."
+          },
+          {
+            role: "user",
+            content: currentInput
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      });
+
+      const aiResponse = completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response. Please try again.";
+      const action = detectAction(currentInput);
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: aiResponse.content,
+        content: aiResponse,
         timestamp: new Date(),
-        action: aiResponse.action,
+        action: action,
       };
+
       setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Error calling OpenAI API:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai',
+        content: "I'm sorry, I encountered an error while processing your request. Please try again later.",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
-  const generateAIResponse = (input: string): { content: string; action?: string } => {
+  const detectAction = (input: string): string | undefined => {
     const lowercaseInput = input.toLowerCase();
     
     if (lowercaseInput.includes('swap') || lowercaseInput.includes('exchange')) {
-      return {
-        content: "I understand you want to swap tokens. I've detected this request and can help you execute it. Would you like me to find the best rate across multiple DEXs?",
-        action: 'swap'
-      };
+      return 'swap';
     } else if (lowercaseInput.includes('balance') || lowercaseInput.includes('portfolio')) {
-      return {
-        content: "I'll check your portfolio balance across all connected chains. Please make sure your wallet is connected to see your complete holdings.",
-        action: 'portfolio'
-      };
+      return 'portfolio';
     } else if (lowercaseInput.includes('lend') || lowercaseInput.includes('aave') || lowercaseInput.includes('compound')) {
-      return {
-        content: "I can help you with lending protocols! I'll show you the best lending rates available across Aave, Compound, and other platforms. Which asset would you like to lend?",
-        action: 'lending'
-      };
-    } else if (lowercaseInput.includes('explain') || lowercaseInput.includes('what is')) {
-      return {
-        content: "I'd be happy to explain DeFi concepts! Here are some key points: DeFi eliminates intermediaries, offers higher yields than traditional finance, but comes with smart contract risks. What specific topic would you like me to dive deeper into?",
-      };
-    } else {
-      return {
-        content: "I'm analyzing your request... I can help with swapping, lending, checking balances, simulating transactions, and explaining DeFi concepts. Could you be more specific about what you'd like to do?",
-      };
+      return 'lending';
     }
+    
+    return undefined;
   };
 
   const handleSuggestedAction = (action: string) => {
@@ -133,7 +153,7 @@ const AIChat = () => {
                       : 'bg-slate-800/80 text-slate-200'
                   }`}
                 >
-                  <p className="text-sm">{message.content}</p>
+                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                   {message.action && (
                     <div className="mt-2 pt-2 border-t border-slate-600">
                       <span className="text-xs text-purple-300">
