@@ -74,6 +74,24 @@ export type Database = {
         }
         Relationships: []
       }
+      courses: {
+        Row: {
+          description: string | null
+          id: string
+          title: string
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          title: string
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       rate_limits: {
         Row: {
           endpoint: string

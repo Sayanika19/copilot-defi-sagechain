@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -224,7 +223,7 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
       </div>
 
       {/* Asset Allocation Chart */}
-      <AssetAllocationChart />
+      <AssetAllocationChart walletData={walletData} isConnected={isConnected} />
 
       {/* Assets Table */}
       <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
