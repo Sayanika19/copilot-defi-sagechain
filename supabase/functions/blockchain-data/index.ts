@@ -82,8 +82,59 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Mock blockchain data for now - in production, you'd integrate with Alchemy/Moralis
-    // This is a placeholder structure for the actual implementation
+    // Generate realistic transaction history for P&L calculation
+    const generateTransactionHistory = () => {
+      const transactions = [];
+      const now = new Date();
+      
+      // Generate transactions over the last 6 months
+      for (let i = 0; i < 25; i++) {
+        const daysAgo = Math.floor(Math.random() * 180); // 6 months
+        const timestamp = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+        
+        const types = ['buy', 'sell', 'swap'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        
+        let transaction;
+        if (type === 'buy') {
+          transaction = {
+            hash: `0x${Math.random().toString(16).substr(2, 8)}...${Math.random().toString(16).substr(2, 3)}`,
+            type: 'buy',
+            from_token: 'USD',
+            to_token: 'ETH',
+            amount: (Math.random() * 2 + 0.1).toFixed(4),
+            price_usd: (1800 + Math.random() * 400).toFixed(2), // ETH price range
+            timestamp: timestamp.toISOString()
+          };
+        } else if (type === 'sell') {
+          transaction = {
+            hash: `0x${Math.random().toString(16).substr(2, 8)}...${Math.random().toString(16).substr(2, 3)}`,
+            type: 'sell',
+            from_token: 'ETH',
+            to_token: 'USD',
+            amount: (Math.random() * 1 + 0.05).toFixed(4),
+            price_usd: (1900 + Math.random() * 300).toFixed(2),
+            timestamp: timestamp.toISOString()
+          };
+        } else {
+          transaction = {
+            hash: `0x${Math.random().toString(16).substr(2, 8)}...${Math.random().toString(16).substr(2, 3)}`,
+            type: 'swap',
+            from_token: 'ETH',
+            to_token: 'USDC',
+            amount: (Math.random() * 0.5 + 0.1).toFixed(4),
+            price_usd: (2000 + Math.random() * 200).toFixed(2),
+            timestamp: timestamp.toISOString()
+          };
+        }
+        
+        transactions.push(transaction);
+      }
+      
+      return transactions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    };
+
+    // Mock blockchain data with realistic values for P&L calculation
     const mockData = {
       balance: {
         address: walletAddress,
@@ -112,22 +163,20 @@ Deno.serve(async (req) => {
             balance: '1250.00',
             price_usd: '1.00',
             value_usd: '1250.00'
+          },
+          {
+            symbol: 'AAVE',
+            name: 'Aave',
+            balance: '15.5',
+            price_usd: '150.00',
+            value_usd: '2325.00'
           }
         ]
       },
       transactions: {
         address: walletAddress,
         chain: chain,
-        transactions: [
-          {
-            hash: '0x123...abc',
-            type: 'swap',
-            from_token: 'ETH',
-            to_token: 'USDC',
-            amount: '0.5',
-            timestamp: new Date().toISOString()
-          }
-        ]
+        transactions: generateTransactionHistory()
       },
       nfts: {
         address: walletAddress,

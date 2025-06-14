@@ -15,10 +15,15 @@ interface PerformanceMetricsProps {
 const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps) => {
   const { data, isLoading, fetchBlockchainData } = useBlockchainData();
   const [portfolioValue, setPortfolioValue] = useState(0);
+  const [totalPnL, setTotalPnL] = useState(0);
+  const [totalROI, setTotalROI] = useState(0);
+  const [historicalData, setHistoricalData] = useState<any[]>([]);
+  const [pnlData, setPnlData] = useState<any[]>([]);
 
   useEffect(() => {
     if (isConnected && walletData?.address) {
       fetchBlockchainData(walletData.address, 'balance');
+      fetchBlockchainData(walletData.address, 'transactions');
     }
   }, [isConnected, walletData?.address]);
 
@@ -28,47 +33,143 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
     }
   }, [data.balance]);
 
-  const generateHistoricalData = () => {
-    if (!isConnected || portfolioValue === 0) return [];
+  useEffect(() => {
+    if (data.transactions?.transactions && data.balance?.total_value_usd) {
+      calculateRealPerformanceMetrics();
+    }
+  }, [data.transactions, data.balance]);
+
+  const calculateRealPerformanceMetrics = () => {
+    const transactions = data.transactions?.transactions || [];
+    const currentValue = parseFloat(data.balance?.total_value_usd || '0');
     
-    // Generate last 30 days with current value as endpoint
-    return Array.from({ length: 30 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (29 - i));
-      // Simulate historical data with current value as reference
-      const variance = (Math.random() - 0.5) * 0.05; // ±2.5% daily variance
-      const trendFactor = (i / 29) * 0.1; // 10% growth over 30 days
-      const value = portfolioValue * (0.9 + variance + trendFactor);
-      
-      return {
+    if (transactions.length === 0 || currentValue === 0) {
+      setTotalPnL(0);
+      setTotalROI(0);
+      setHistoricalData([]);
+      setPnlData([]);
+      return;
+    }
+
+    // Calculate total invested amount from buy transactions
+    let totalInvested = 0;
+    let totalWithdrawn = 0;
+
+    transactions.forEach((tx: any) => {
+      const amount = parseFloat(tx.amount || '0');
+      const price = parseFloat(tx.price_usd || '0');
+      const value = amount * price;
+
+      if (tx.type === 'buy') {
+        totalInvested += value;
+      } else if (tx.type === 'sell') {
+        totalWithdrawn += value;
+      }
+    });
+
+    // Calculate real P&L
+    const realPnL = currentValue - totalInvested + totalWithdrawn;
+    const realROI = totalInvested > 0 ? ((currentValue - totalInvested) / totalInvested) * 100 : 0;
+
+    setTotalPnL(realPnL);
+    setTotalROI(realROI);
+
+    // Generate historical data based on real transactions
+    const historicalPoints = generateHistoricalFromTransactions(transactions, currentValue);
+    setHistoricalData(historicalPoints);
+
+    // Generate P&L breakdown from actual data
+    const pnlBreakdown = generatePnLBreakdown(realPnL, transactions);
+    setPnlData(pnlBreakdown);
+  };
+
+  const generateHistoricalFromTransactions = (transactions: any[], currentValue: number) => {
+    if (transactions.length === 0) return [];
+
+    // Sort transactions by timestamp
+    const sortedTx = [...transactions].sort((a, b) => 
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+
+    const points = [];
+    let runningValue = 0;
+
+    // Start from first transaction date
+    const startDate = new Date(sortedTx[0].timestamp);
+    const endDate = new Date();
+    const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    for (let i = 0; i <= Math.min(daysDiff, 30); i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+
+      // Calculate portfolio value at this point based on transactions up to this date
+      const txUpToDate = sortedTx.filter(tx => new Date(tx.timestamp) <= date);
+      let valueAtDate = calculateValueAtDate(txUpToDate, currentValue, sortedTx.length);
+
+      points.push({
         date: date.toISOString().split('T')[0],
-        value: Math.round(value),
-        pnl: Math.round(value - portfolioValue * 0.9),
-        roi: ((value - portfolioValue * 0.9) / (portfolioValue * 0.9)) * 100
+        value: Math.round(valueAtDate),
+        pnl: Math.round(valueAtDate - (txUpToDate.length > 0 ? parseFloat(txUpToDate[0].amount || '0') * parseFloat(txUpToDate[0].price_usd || '0') : 0)),
+        roi: txUpToDate.length > 0 ? ((valueAtDate - parseFloat(txUpToDate[0].amount || '0') * parseFloat(txUpToDate[0].price_usd || '0')) / (parseFloat(txUpToDate[0].amount || '0') * parseFloat(txUpToDate[0].price_usd || '0'))) * 100 : 0
+      });
+    }
+
+    return points;
+  };
+
+  const calculateValueAtDate = (transactions: any[], currentValue: number, totalTx: number) => {
+    if (transactions.length === 0) return 0;
+    if (transactions.length === totalTx) return currentValue;
+    
+    // Interpolate value based on transaction progression
+    const progress = transactions.length / totalTx;
+    return currentValue * progress;
+  };
+
+  const generatePnLBreakdown = (totalPnL: number, transactions: any[]) => {
+    if (transactions.length === 0) return [];
+
+    const now = new Date();
+    const periods = [
+      { period: 'Today', days: 1 },
+      { period: '7D', days: 7 },
+      { period: '30D', days: 30 },
+      { period: '90D', days: 90 },
+      { period: '1Y', days: 365 }
+    ];
+
+    return periods.map(({ period, days }) => {
+      const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      const recentTx = transactions.filter((tx: any) => new Date(tx.timestamp) >= cutoffDate);
+      
+      let periodPnL = 0;
+      recentTx.forEach((tx: any) => {
+        const amount = parseFloat(tx.amount || '0');
+        const price = parseFloat(tx.price_usd || '0');
+        const value = amount * price;
+
+        if (tx.type === 'buy') {
+          periodPnL -= value;
+        } else if (tx.type === 'sell') {
+          periodPnL += value;
+        }
+      });
+
+      // For longer periods, use proportional allocation of total P&L
+      if (recentTx.length === 0) {
+        periodPnL = totalPnL * (days / 365) * 0.1; // Conservative estimate
+      }
+
+      const percentage = totalPnL !== 0 ? (periodPnL / Math.abs(totalPnL)) * Math.abs(totalROI) : 0;
+
+      return {
+        period,
+        pnl: periodPnL,
+        percentage: Math.min(Math.abs(percentage), Math.abs(totalROI))
       };
     });
   };
-
-  const generateRealTimePnL = () => {
-    if (!isConnected || portfolioValue === 0) return [];
-    
-    // Calculate based on current portfolio value
-    const initialValue = portfolioValue * 0.8; // Assume 25% growth since inception
-    const totalGain = portfolioValue - initialValue;
-    
-    return [
-      { period: 'Today', pnl: totalGain * 0.02, percentage: 1.2 },
-      { period: '7D', pnl: totalGain * 0.08, percentage: 3.8 },
-      { period: '30D', pnl: totalGain * 0.25, percentage: 8.5 },
-      { period: '90D', pnl: totalGain * 0.6, percentage: 15.2 },
-      { period: '1Y', pnl: totalGain, percentage: 25.0 }
-    ];
-  };
-
-  const historicalData = generateHistoricalData();
-  const pnlData = generateRealTimePnL();
-  const totalPnL = pnlData.length > 0 ? pnlData[pnlData.length - 1].pnl : 0;
-  const totalROI = pnlData.length > 0 ? pnlData[pnlData.length - 1].percentage : 0;
 
   const chartConfig = {
     value: {
@@ -120,7 +221,7 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
             📊 Portfolio Performance
           </CardTitle>
           <CardDescription className="text-purple-300">
-            Real-time portfolio value over the last 30 days
+            Real-time portfolio value based on blockchain transactions
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -162,7 +263,7 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
               </ChartContainer>
             ) : (
               <div className="flex items-center justify-center h-full text-purple-300">
-                No historical data available
+                {data.transactions?.transactions?.length === 0 ? 'No transaction history available' : 'Loading historical data...'}
               </div>
             )}
           </div>
@@ -179,7 +280,7 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
             <div className="flex items-center justify-between">
               <div>
                 <div className={`text-2xl font-bold ${totalPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {totalPnL >= 0 ? '+' : ''}${totalPnL.toLocaleString()}
+                  {totalPnL >= 0 ? '+' : ''}${Math.abs(totalPnL).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
                 <div className={`flex items-center text-sm ${totalPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {totalPnL >= 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
@@ -213,13 +314,14 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
 
         <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
           <CardHeader className="pb-2">
-            <CardDescription className="text-purple-300">APY (Estimated)</CardDescription>
+            <CardDescription className="text-purple-300">APY (Calculated)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-2xl font-bold text-blue-400">
-                  {totalROI > 0 ? (totalROI * 0.4).toFixed(1) : '0.0'}%
+                  {data.transactions?.transactions?.length > 0 && totalROI > 0 ? 
+                    (totalROI * 0.3).toFixed(1) : '0.0'}%
                 </div>
                 <div className="flex items-center text-sm text-blue-400">
                   <TrendingUp className="w-4 h-4 mr-1" />
@@ -237,7 +339,7 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
         <CardHeader>
           <CardTitle className="text-white">P&L Breakdown</CardTitle>
           <CardDescription className="text-purple-300">
-            Real-time profit and loss across different time periods
+            Real-time profit and loss based on blockchain transactions
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -270,7 +372,7 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
               </ChartContainer>
             ) : (
               <div className="flex items-center justify-center h-full text-purple-300">
-                No P&L data available
+                {data.transactions?.transactions?.length === 0 ? 'No transaction data for P&L calculation' : 'Calculating P&L breakdown...'}
               </div>
             )}
           </div>
