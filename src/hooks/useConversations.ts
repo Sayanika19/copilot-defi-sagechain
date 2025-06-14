@@ -71,7 +71,15 @@ export const useConversations = () => {
         return;
       }
 
-      setMessages(data || []);
+      // Transform the data to ensure type safety
+      const transformedMessages: ChatMessage[] = (data || []).map(msg => ({
+        ...msg,
+        type: msg.type as 'user' | 'ai', // Type assertion to fix the TypeScript error
+        intent: msg.intent || undefined,
+        requires_web3: msg.requires_web3 || false,
+      }));
+
+      setMessages(transformedMessages);
     } catch (error) {
       console.error('Unexpected error:', error);
     } finally {
