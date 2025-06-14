@@ -71,13 +71,21 @@ export const useConversations = () => {
         return;
       }
 
-      // Transform the data to ensure type safety
-      const transformedMessages: ChatMessage[] = (data || []).map(msg => ({
-        ...msg,
-        type: msg.type as 'user' | 'ai', // Type assertion to fix the TypeScript error
-        intent: msg.intent || undefined,
-        requires_web3: msg.requires_web3 || false,
-      }));
+      // Transform the data to ensure proper typing
+      const transformedMessages: ChatMessage[] = (data || []).map(msg => {
+        // Ensure the type is either 'user' or 'ai', default to 'user' if invalid
+        const messageType: 'user' | 'ai' = (msg.type === 'user' || msg.type === 'ai') ? msg.type : 'user';
+        
+        return {
+          id: msg.id,
+          conversation_id: msg.conversation_id,
+          type: messageType,
+          content: msg.content,
+          intent: msg.intent || undefined,
+          requires_web3: msg.requires_web3 || false,
+          created_at: msg.created_at,
+        };
+      });
 
       setMessages(transformedMessages);
     } catch (error) {
