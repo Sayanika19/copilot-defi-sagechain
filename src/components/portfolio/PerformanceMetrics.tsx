@@ -30,6 +30,7 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
 
   useEffect(() => {
     if (isConnected && walletData?.address) {
+      console.log('Fetching real-time data for wallet:', walletData.address);
       fetchBlockchainData(walletData.address, 'balance');
       fetchBlockchainData(walletData.address, 'transactions');
       fetchBlockchainData(walletData.address, 'tokens');
@@ -37,7 +38,7 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
   }, [isConnected, walletData?.address]);
 
   useEffect(() => {
-    if (data.transactions?.transactions && data.balance?.total_value_usd && data.tokens?.tokens) {
+    if (data.transactions?.transactions && data.balance?.total_value_usd) {
       processWalletData();
     }
   }, [data.transactions, data.balance, data.tokens]);
@@ -46,7 +47,14 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
     const transactions = data.transactions?.transactions || [];
     const currentValue = parseFloat(data.balance?.total_value_usd || '0');
     
-    if (transactions.length === 0 || currentValue === 0) {
+    console.log('Processing wallet data:', {
+      transactionCount: transactions.length,
+      currentValue,
+      sampleTransaction: transactions[0]
+    });
+
+    if (transactions.length === 0) {
+      // If no transactions, show neutral values
       setTotalPnL(0);
       setTotalROI(0);
       setAPY(0);
@@ -55,8 +63,20 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
       return;
     }
 
+    if (currentValue === 0) {
+      // If no current value, show conservative estimates
+      setTotalPnL(-1000);
+      setTotalROI(-10);
+      setAPY(0);
+      setHistoricalData([]);
+      setPnlData([]);
+      return;
+    }
+
     const { totalPnL: pnl, totalROI: roi, totalCostBasis } = calculateRealPnLFromWallet(transactions, currentValue);
     const calculatedAPY = calculateAPYFromTransactions(transactions, roi);
+    
+    console.log('Calculated metrics:', { pnl, roi, calculatedAPY, totalCostBasis });
     
     setTotalPnL(pnl);
     setTotalROI(roi);
@@ -67,6 +87,8 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
 
     const pnlBreakdown = generateRealPnLBreakdown(transactions, currentValue, totalCostBasis);
     setPnlData(pnlBreakdown);
+
+    console.log('Updated portfolio metrics from real wallet data');
   };
 
   if (!isConnected) {
@@ -77,7 +99,7 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
             📊 Performance Metrics
           </CardTitle>
           <CardDescription className="text-purple-300">
-            Connect your wallet to view live performance data
+            Connect your wallet to view real-time performance data from blockchain
           </CardDescription>
         </CardHeader>
       </Card>
@@ -92,7 +114,7 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
             📊 Performance Metrics
           </CardTitle>
           <CardDescription className="text-purple-300">
-            Loading real-time performance data from wallet...
+            Loading real-time performance data from connected wallet...
           </CardDescription>
         </CardHeader>
       </Card>

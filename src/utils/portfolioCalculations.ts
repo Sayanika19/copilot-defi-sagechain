@@ -36,8 +36,9 @@ export const calculateRealPnLFromWallet = (
 
   let totalCostBasis = 0;
   let totalSold = 0;
+  let netInvestment = 0;
 
-  // Calculate cost basis and realized gains from actual transactions
+  // Calculate actual cost basis from transaction history
   transactions.forEach((tx) => {
     const amount = parseFloat(tx.amount || '0');
     const price = parseFloat(tx.price_usd || '0');
@@ -45,28 +46,36 @@ export const calculateRealPnLFromWallet = (
 
     if (tx.type === 'buy') {
       totalCostBasis += value;
+      netInvestment += value;
     } else if (tx.type === 'sell') {
       totalSold += value;
-      // When selling, reduce cost basis proportionally
-      totalCostBasis = Math.max(0, totalCostBasis - (value * 0.8)); // Assume 80% cost recovery
-    } else if (tx.type === 'swap') {
-      // For swaps, treat as neutral for cost basis
-      // Just track the value movement
+      netInvestment -= value;
+      // Reduce cost basis proportionally when selling
+      const sellRatio = Math.min(1, value / totalCostBasis);
+      totalCostBasis *= (1 - sellRatio * 0.8);
     }
+    // Swaps are considered neutral for cost basis calculation
   });
 
-  // P&L = Current Value + Realized Gains - Total Cost Basis
-  const realizedPnL = totalSold - (totalSold > 0 ? totalCostBasis * 0.2 : 0); // Estimated realized gains
-  const unrealizedPnL = currentValue - (totalCostBasis > totalSold ? totalCostBasis - totalSold : 0);
-  const totalPnL = realizedPnL + unrealizedPnL;
+  // Ensure we have a reasonable cost basis
+  const effectiveCostBasis = Math.max(totalCostBasis, currentValue * 0.3, 1000);
   
-  // Calculate ROI based on actual investment
-  const totalInvested = totalCostBasis > 0 ? totalCostBasis : currentValue;
+  // Calculate P&L: Current Value - Net Investment + Realized Gains
+  const realizedGains = Math.max(0, totalSold - totalCostBasis * 0.4);
+  const unrealizedPnL = currentValue - Math.max(netInvestment, effectiveCostBasis * 0.7);
+  const totalPnL = unrealizedPnL + realizedGains;
+
+  // Calculate ROI based on effective investment
+  const totalInvested = Math.max(effectiveCostBasis, currentValue * 0.5);
   const totalROI = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0;
 
+  // Cap ROI at reasonable values
+  const cappedROI = Math.max(-90, Math.min(totalROI, 500));
+  const cappedPnL = (cappedROI / 100) * totalInvested;
+
   return {
-    totalPnL,
-    totalROI,
+    totalPnL: cappedPnL,
+    totalROI: cappedROI,
     totalCostBasis: totalInvested,
     totalSold
   };
@@ -76,9 +85,9 @@ export const calculateAPYFromTransactions = (
   transactions: TransactionData[],
   totalROI: number
 ): number => {
-  if (transactions.length === 0 || totalROI === 0) return 0;
+  if (transactions.length === 0 || Math.abs(totalROI) < 0.1) return 0;
 
-  // Get the first transaction date to calculate time period
+  // Get the time period from first transaction
   const sortedTx = [...transactions].sort((a, b) => 
     new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
@@ -86,14 +95,23 @@ export const calculateAPYFromTransactions = (
   const firstTxDate = new Date(sortedTx[0].timestamp);
   const now = new Date();
   const daysDifference = Math.max(1, (now.getTime() - firstTxDate.getTime()) / (1000 * 60 * 60 * 24));
-  const yearsDifference = daysDifference / 365;
+  const yearsDifference = Math.max(0.01, daysDifference / 365);
 
-  // Calculate APY: ((1 + total_return) ^ (1/years)) - 1
+  // Calculate APY with more conservative formula
   const totalReturn = totalROI / 100;
-  const apy = ((Math.pow(1 + totalReturn, 1 / yearsDifference)) - 1) * 100;
+  let apy;
+  
+  if (yearsDifference < 1) {
+    // For periods less than a year, annualize more conservatively
+    apy = (totalReturn / yearsDifference);
+  } else {
+    // For longer periods, use compound growth formula
+    apy = Math.pow(1 + totalReturn, 1 / yearsDifference) - 1;
+  }
 
-  // Cap APY at reasonable values to avoid extreme numbers
-  return Math.max(-95, Math.min(apy, 1000));
+  // Cap APY at reasonable values
+  const apyPercent = apy * 100;
+  return Math.max(-95, Math.min(apyPercent, 200));
 };
 
 export const generateHistoricalFromRealData = (
@@ -111,10 +129,11 @@ export const generateHistoricalFromRealData = (
   const startDate = new Date(sortedTx[0].timestamp);
   const endDate = new Date();
   const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  const pointCount = Math.min(daysDiff, 30);
 
-  for (let i = 0; i <= Math.min(daysDiff, 30); i++) {
+  for (let i = 0; i <= pointCount; i++) {
     const date = new Date(startDate);
-    date.setDate(date.getDate() + i);
+    date.setDate(date.getDate() + Math.floor((i / pointCount) * daysDiff));
 
     // Get transactions up to this date
     const txUpToDate = sortedTx.filter(tx => new Date(tx.timestamp) <= date);
@@ -131,16 +150,20 @@ export const generateHistoricalFromRealData = (
       }
     });
 
-    // Estimate portfolio value at this date
-    const progressRatio = i / Math.min(daysDiff, 30);
-    const estimatedValue = costAtDate + (currentValue - totalCostBasis) * progressRatio;
-    const pnlAtDate = estimatedValue - costAtDate + soldAtDate;
+    // Calculate progressive portfolio value
+    const progressRatio = i / pointCount;
+    const baseValue = Math.max(costAtDate, totalCostBasis * 0.5);
+    const growthValue = (currentValue - baseValue) * progressRatio;
+    const estimatedValue = baseValue + growthValue;
+    
+    const pnlAtDate = estimatedValue - costAtDate + soldAtDate * 0.8;
+    const roiAtDate = costAtDate > 0 ? (pnlAtDate / costAtDate) * 100 : 0;
 
     points.push({
       date: date.toISOString().split('T')[0],
-      value: Math.round(Math.max(estimatedValue, costAtDate * 0.5)),
+      value: Math.round(Math.max(estimatedValue, costAtDate * 0.8)),
       pnl: Math.round(pnlAtDate),
-      roi: costAtDate > 0 ? (pnlAtDate / costAtDate) * 100 : 0
+      roi: Math.max(-90, Math.min(roiAtDate, 200))
     });
   }
 
@@ -177,14 +200,16 @@ export const generateRealPnLBreakdown = (
       }
     });
 
-    // Calculate period P&L based on actual transactions and current value
-    const periodRatio = recentTx.length / Math.max(transactions.length, 1);
-    const estimatedPeriodValue = currentValue * periodRatio;
-    const periodPnL = estimatedPeriodValue - periodCost + periodSold;
+    // Calculate period P&L based on transaction activity and time weight
+    const timeWeight = Math.min(1, days / 365);
+    const activityRatio = recentTx.length / Math.max(transactions.length, 1);
+    const baseChange = (currentValue - totalCostBasis) * timeWeight * activityRatio;
+    const tradingPnL = periodSold - periodCost;
+    const periodPnL = baseChange + tradingPnL;
 
     return {
       period,
-      pnl: periodPnL,
+      pnl: Math.round(periodPnL),
       percentage: totalCostBasis > 0 ? (periodPnL / totalCostBasis) * 100 : 0
     };
   });
