@@ -29,7 +29,7 @@ interface AssetAllocationChartProps {
 }
 
 const AssetAllocationChart = ({ walletData, isConnected }: AssetAllocationChartProps) => {
-  // Generate allocation data based on connected wallet
+  // Generate allocation data based on real wallet balance
   const getAllocationData = () => {
     if (!walletData?.balance || !isConnected) {
       // Default data when no wallet connected
@@ -42,54 +42,18 @@ const AssetAllocationChart = ({ walletData, isConnected }: AssetAllocationChartP
     }
     
     const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
-    const ethPrice = 2800; // Mock ETH price
-    const portfolioValue = ethAmount * ethPrice;
     
-    const data = [];
-    
-    // Calculate ETH percentage (base allocation)
-    const ethValue = ethAmount * ethPrice;
-    let ethPercentage = 70; // Base allocation
-    
-    // Adjust based on portfolio size
-    if (portfolioValue > 20000) {
-      ethPercentage = 50; // More diversified for larger portfolios
-    } else if (portfolioValue > 10000) {
-      ethPercentage = 60;
-    } else if (portfolioValue < 1000) {
-      ethPercentage = 90; // Small portfolios mostly ETH
+    // For empty wallet, return no allocation
+    if (ethAmount === 0) {
+      return [
+        { name: "No Assets", value: 100, color: "hsl(260, 20%, 50%)" }
+      ];
     }
     
-    data.push({ name: "ETH", value: ethPercentage, color: "hsl(260, 100%, 80%)" });
-    
-    // Add other allocations based on portfolio size
-    if (portfolioValue > 1000) {
-      const usdcPercentage = portfolioValue > 10000 ? 25 : 20;
-      data.push({ name: "USDC", value: usdcPercentage, color: "hsl(200, 100%, 70%)" });
-      
-      if (portfolioValue > 5000) {
-        const lpPercentage = portfolioValue > 15000 ? 15 : 8;
-        data.push({ name: "LP Tokens", value: lpPercentage, color: "hsl(280, 100%, 70%)" });
-        
-        const otherPercentage = 100 - ethPercentage - usdcPercentage - lpPercentage;
-        if (otherPercentage > 0) {
-          data.push({ name: "Other", value: otherPercentage, color: "hsl(320, 100%, 70%)" });
-        }
-      } else {
-        const otherPercentage = 100 - ethPercentage - usdcPercentage;
-        if (otherPercentage > 0) {
-          data.push({ name: "Other", value: otherPercentage, color: "hsl(320, 100%, 70%)" });
-        }
-      }
-    } else {
-      // Small portfolios - mostly ETH with minimal other assets
-      const otherPercentage = 100 - ethPercentage;
-      if (otherPercentage > 0) {
-        data.push({ name: "Other", value: otherPercentage, color: "hsl(320, 100%, 70%)" });
-      }
-    }
-    
-    return data;
+    // For wallets with ETH, show ETH-heavy allocation
+    return [
+      { name: "ETH", value: 100, color: "hsl(260, 100%, 80%)" }
+    ];
   };
 
   const data = getAllocationData();
@@ -98,10 +62,10 @@ const AssetAllocationChart = ({ walletData, isConnected }: AssetAllocationChartP
     <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
       <CardHeader>
         <CardTitle className="text-white">
-          Asset Allocation
+          Asset Allocation (Real-Time)
           {isConnected && walletData && (
             <span className="block text-sm font-normal text-purple-300 mt-1">
-              Based on wallet: {walletData.address.slice(0, 6)}...{walletData.address.slice(-4)}
+              Based on MetaMask wallet: {walletData.address.slice(0, 6)}...{walletData.address.slice(-4)}
             </span>
           )}
         </CardTitle>
@@ -146,7 +110,7 @@ const AssetAllocationChart = ({ walletData, isConnected }: AssetAllocationChartP
         
         {!isConnected && (
           <div className="text-center mt-4 p-3 bg-purple-900/20 rounded-lg border border-purple-800/30">
-            <p className="text-purple-300 text-sm">Connect your wallet to see real allocation data</p>
+            <p className="text-purple-300 text-sm">Connect your MetaMask wallet to see real allocation data</p>
           </div>
         )}
       </CardContent>

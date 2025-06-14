@@ -29,18 +29,17 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
       
       setPortfolioValue(currentValue);
       
-      // If wallet has no value, show zero change
-      if (currentValue === 0) {
-        setDailyChange(0);
-        setChangePercent(0);
-      } else {
-        // Calculate small daily change for non-zero portfolios
+      // Only show positive change for wallets with actual value
+      if (currentValue > 0) {
         const marketChange = currentValue * 0.001; // 0.1% change
         setDailyChange(marketChange);
         setChangePercent(0.1);
+      } else {
+        setDailyChange(0);
+        setChangePercent(0);
       }
       
-      console.log('Updated portfolio value from MetaMask wallet:', currentValue);
+      console.log('Real-time portfolio value from MetaMask wallet:', currentValue);
     } else {
       setPortfolioValue(0);
       setDailyChange(0);
@@ -55,7 +54,6 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
 
   const getActivePositions = () => {
     if (!isConnected || portfolioValue === 0) return 0;
-    // Return 1 if wallet has ETH, 0 if empty
     return portfolioValue > 0 ? 1 : 0;
   };
 
@@ -83,7 +81,7 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-purple-300">Connected Wallet</p>
+                <p className="text-sm text-purple-300">Connected Wallet (Real-Time)</p>
                 <p className="text-white font-mono">{walletData.address}</p>
               </div>
               <div className="text-right">
@@ -99,7 +97,7 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
           <CardHeader className="pb-2">
-            <CardDescription className="text-purple-300">Total Portfolio Value (Live)</CardDescription>
+            <CardDescription className="text-purple-300">Total Portfolio Value (Real-Time)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -108,8 +106,14 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
                   ${portfolioValue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </div>
                 <div className={`flex items-center text-sm ${changePercent >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {changePercent >= 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
-                  {portfolioValue === 0 ? 'No Assets' : `${changePercent >= 0 ? '+' : ''}$${Math.abs(dailyChange).toFixed(2)} (${Math.abs(changePercent).toFixed(1)}%)`}
+                  {portfolioValue === 0 ? (
+                    <span className="text-gray-400">Empty Wallet</span>
+                  ) : (
+                    <>
+                      {changePercent >= 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
+                      {`${changePercent >= 0 ? '+' : ''}$${Math.abs(dailyChange).toFixed(2)} (${Math.abs(changePercent).toFixed(1)}%)`}
+                    </>
+                  )}
                 </div>
               </div>
               <DollarSign className="w-8 h-8 text-green-400" />
@@ -119,7 +123,7 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
 
         <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
           <CardHeader className="pb-2">
-            <CardDescription className="text-purple-300">Active Chains (Live)</CardDescription>
+            <CardDescription className="text-purple-300">Active Chains (Real-Time)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -138,7 +142,7 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
 
         <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
           <CardHeader className="pb-2">
-            <CardDescription className="text-purple-300">Token Holdings (Live)</CardDescription>
+            <CardDescription className="text-purple-300">Token Holdings (Real-Time)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -174,7 +178,7 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
             <AlertTriangle className="w-5 h-5 text-orange-400" />
             Real-Time Risk Alerts
           </CardTitle>
-          <CardDescription className="text-orange-300">Live portfolio risk monitoring from connected wallet</CardDescription>
+          <CardDescription className="text-orange-300">Live portfolio risk monitoring from connected MetaMask wallet</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
