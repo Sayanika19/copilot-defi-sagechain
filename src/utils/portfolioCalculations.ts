@@ -47,27 +47,53 @@ export const calculateRealPnLFromWallet = (
       totalCostBasis += value;
     } else if (tx.type === 'sell') {
       totalSold += value;
+      // When selling, reduce cost basis proportionally
+      totalCostBasis = Math.max(0, totalCostBasis - (value * 0.8)); // Assume 80% cost recovery
     } else if (tx.type === 'swap') {
-      // For swaps, treat as both a sell and buy
-      totalSold += value * 0.5;
-      totalCostBasis += value * 0.5;
+      // For swaps, treat as neutral for cost basis
+      // Just track the value movement
     }
   });
 
-  // Calculate P&L
-  const realizedPnL = totalSold - (totalCostBasis * (totalSold / (totalSold + currentValue)));
-  const unrealizedPnL = currentValue - (totalCostBasis - (totalCostBasis * (totalSold / (totalSold + currentValue))));
+  // P&L = Current Value + Realized Gains - Total Cost Basis
+  const realizedPnL = totalSold - (totalSold > 0 ? totalCostBasis * 0.2 : 0); // Estimated realized gains
+  const unrealizedPnL = currentValue - (totalCostBasis > totalSold ? totalCostBasis - totalSold : 0);
   const totalPnL = realizedPnL + unrealizedPnL;
   
-  // Calculate ROI
-  const totalROI = totalCostBasis > 0 ? (totalPnL / totalCostBasis) * 100 : 0;
+  // Calculate ROI based on actual investment
+  const totalInvested = totalCostBasis > 0 ? totalCostBasis : currentValue;
+  const totalROI = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0;
 
   return {
     totalPnL,
     totalROI,
-    totalCostBasis,
+    totalCostBasis: totalInvested,
     totalSold
   };
+};
+
+export const calculateAPYFromTransactions = (
+  transactions: TransactionData[],
+  totalROI: number
+): number => {
+  if (transactions.length === 0 || totalROI === 0) return 0;
+
+  // Get the first transaction date to calculate time period
+  const sortedTx = [...transactions].sort((a, b) => 
+    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+
+  const firstTxDate = new Date(sortedTx[0].timestamp);
+  const now = new Date();
+  const daysDifference = Math.max(1, (now.getTime() - firstTxDate.getTime()) / (1000 * 60 * 60 * 24));
+  const yearsDifference = daysDifference / 365;
+
+  // Calculate APY: ((1 + total_return) ^ (1/years)) - 1
+  const totalReturn = totalROI / 100;
+  const apy = ((Math.pow(1 + totalReturn, 1 / yearsDifference)) - 1) * 100;
+
+  // Cap APY at reasonable values to avoid extreme numbers
+  return Math.max(-95, Math.min(apy, 1000));
 };
 
 export const generateHistoricalFromRealData = (

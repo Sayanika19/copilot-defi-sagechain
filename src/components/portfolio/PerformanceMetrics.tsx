@@ -7,6 +7,7 @@ import {
   calculateRealPnLFromWallet, 
   generateHistoricalFromRealData, 
   generateRealPnLBreakdown,
+  calculateAPYFromTransactions,
   HistoricalDataPoint,
   PnLBreakdownData
 } from "../../utils/portfolioCalculations";
@@ -23,6 +24,7 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
   const { data, isLoading, fetchBlockchainData } = useBlockchainData();
   const [totalPnL, setTotalPnL] = useState(0);
   const [totalROI, setTotalROI] = useState(0);
+  const [apy, setAPY] = useState(0);
   const [historicalData, setHistoricalData] = useState<HistoricalDataPoint[]>([]);
   const [pnlData, setPnlData] = useState<PnLBreakdownData[]>([]);
 
@@ -47,15 +49,18 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
     if (transactions.length === 0 || currentValue === 0) {
       setTotalPnL(0);
       setTotalROI(0);
+      setAPY(0);
       setHistoricalData([]);
       setPnlData([]);
       return;
     }
 
     const { totalPnL: pnl, totalROI: roi, totalCostBasis } = calculateRealPnLFromWallet(transactions, currentValue);
+    const calculatedAPY = calculateAPYFromTransactions(transactions, roi);
     
     setTotalPnL(pnl);
     setTotalROI(roi);
+    setAPY(calculatedAPY);
 
     const historicalPoints = generateHistoricalFromRealData(transactions, currentValue, totalCostBasis);
     setHistoricalData(historicalPoints);
@@ -72,7 +77,7 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
             📊 Performance Metrics
           </CardTitle>
           <CardDescription className="text-purple-300">
-            Connect your wallet to view performance data
+            Connect your wallet to view live performance data
           </CardDescription>
         </CardHeader>
       </Card>
@@ -87,7 +92,7 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
             📊 Performance Metrics
           </CardTitle>
           <CardDescription className="text-purple-300">
-            Loading real-time performance data...
+            Loading real-time performance data from wallet...
           </CardDescription>
         </CardHeader>
       </Card>
@@ -101,6 +106,7 @@ const PerformanceMetrics = ({ isConnected, walletData }: PerformanceMetricsProps
       <PerformanceStatsCards 
         totalPnL={totalPnL}
         totalROI={totalROI}
+        apy={apy}
         hasTransactions={hasTransactions}
       />
 
