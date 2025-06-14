@@ -19,8 +19,42 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
     return Math.round(ethAmount * ethPrice);
   };
 
+  // Calculate active positions based on wallet value
+  const getActivePositions = () => {
+    if (!walletData?.balance || !isConnected) return 0;
+    const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
+    
+    // Simulate positions based on ETH amount
+    if (ethAmount >= 5) return 12;
+    if (ethAmount >= 3) return 8;
+    if (ethAmount >= 1) return 5;
+    if (ethAmount >= 0.5) return 3;
+    if (ethAmount >= 0.1) return 2;
+    return 1;
+  };
+
+  // Calculate risk score based on wallet value and holdings
+  const getRiskScore = () => {
+    if (!walletData?.balance || !isConnected) return { score: 'Medium', color: 'text-yellow-400' };
+    const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
+    const portfolioValue = getPortfolioValue();
+    
+    // Risk assessment based on portfolio size and concentration
+    if (portfolioValue > 20000 && ethAmount < portfolioValue * 0.7 / 2800) {
+      return { score: 'Low', color: 'text-green-400' };
+    } else if (portfolioValue > 10000) {
+      return { score: 'Medium', color: 'text-yellow-400' };
+    } else if (portfolioValue > 5000) {
+      return { score: 'Medium-High', color: 'text-orange-400' };
+    } else {
+      return { score: 'High', color: 'text-red-400' };
+    }
+  };
+
   const portfolioValue = getPortfolioValue();
   const portfolioChange = isConnected ? ((portfolioValue - 10000) / 10000 * 100) : 8.5;
+  const activePositions = getActivePositions();
+  const riskScore = getRiskScore();
 
   return (
     <div className="space-y-6">
@@ -68,8 +102,10 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-2xl font-bold text-white">{isConnected ? '7' : '0'}</div>
-                <div className="text-sm text-green-400">+2 this week</div>
+                <div className="text-2xl font-bold text-white">{activePositions}</div>
+                <div className="text-sm text-green-400">
+                  {isConnected ? '+2 this week' : 'Connect wallet'}
+                </div>
               </div>
               <Activity className="w-8 h-8 text-purple-400" />
             </div>
@@ -98,8 +134,10 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-2xl font-bold text-white">Medium</div>
-                <div className="text-sm text-yellow-400">Balanced</div>
+                <div className={`text-2xl font-bold ${riskScore.color}`}>{riskScore.score}</div>
+                <div className="text-sm text-purple-300">
+                  {isConnected ? 'Calculated' : 'Connect wallet'}
+                </div>
               </div>
               <Shield className="w-8 h-8 text-purple-400" />
             </div>
