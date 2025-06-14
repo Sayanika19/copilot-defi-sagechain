@@ -1,12 +1,12 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Brain, User, Sparkles, AlertTriangle } from "lucide-react";
+import { Send, Brain, User, Sparkles, AlertTriangle, LogIn } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Message {
   id: string;
@@ -32,6 +32,7 @@ const AIChat = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
 
   const suggestedActions = [
     "Check my portfolio balance",
@@ -71,6 +72,16 @@ const AIChat = () => {
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to use the AI assistant.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
@@ -86,6 +97,12 @@ const AIChat = () => {
     try {
       const intent = recognizeIntent(currentInput);
       
+      console.log('Sending message to AI chat function:', {
+        message: currentInput,
+        conversationId: conversationId,
+        intent: intent
+      });
+      
       // Call the secure Edge Function
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: {
@@ -95,6 +112,8 @@ const AIChat = () => {
         }
       });
 
+      console.log('AI chat function response:', { data, error });
+
       if (error) {
         console.error('Error calling AI chat function:', error);
         
@@ -103,6 +122,8 @@ const AIChat = () => {
           errorMessage = "You've reached the rate limit. Please try again in an hour.";
         } else if (error.message?.includes('Invalid user')) {
           errorMessage = "Please make sure you're logged in to use the AI assistant.";
+        } else if (error.message?.includes('OpenAI API key not configured')) {
+          errorMessage = "AI service is currently unavailable. Please try again later.";
         }
 
         toast({
@@ -162,6 +183,39 @@ const AIChat = () => {
   const handleSuggestedAction = (action: string) => {
     setInputValue(action);
   };
+
+  // Show authentication prompt if user is not authenticated
+  if (!isAuthenticated) {
+    return (
+      <Card className="h-[calc(100vh-12rem)] bg-black/40 border-purple-800/30 backdrop-blur-xl flex flex-col">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-white flex items-center gap-2">
+            <Brain className="w-5 h-5 text-purple-400" />
+            AI Assistant
+            <Sparkles className="w-4 h-4 text-yellow-400" />
+          </CardTitle>
+        </CardHeader>
+        
+        <CardContent className="flex-1 flex flex-col items-center justify-center p-6">
+          <div className="text-center space-y-4">
+            <LogIn className="w-12 h-12 text-purple-400 mx-auto" />
+            <h3 className="text-xl font-semibold text-white">Authentication Required</h3>
+            <p className="text-slate-300 max-w-md">
+              Please sign in to access the AI assistant and start chatting about DeFi protocols, 
+              portfolio analysis, and blockchain technology.
+            </p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              Sign In to Continue
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="h-[calc(100vh-12rem)] bg-black/40 border-purple-800/30 backdrop-blur-xl flex flex-col">

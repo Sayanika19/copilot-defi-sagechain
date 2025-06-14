@@ -19,8 +19,13 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log('AI Chat function called');
+    
     const authHeader = req.headers.get('Authorization');
+    console.log('Auth header present:', !!authHeader);
+    
     if (!authHeader) {
+      console.error('No authorization header');
       return new Response(JSON.stringify({ error: 'No authorization header' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -36,12 +41,17 @@ Deno.serve(async (req) => {
 
     // Get the user from the auth header
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    console.log('User auth result:', { user: !!user, error: userError });
+    
     if (userError || !user) {
+      console.error('Invalid user:', userError);
       return new Response(JSON.stringify({ error: 'Invalid user' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    console.log('User authenticated:', user.id);
 
     // Check rate limiting
     const now = new Date();
@@ -56,6 +66,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (rateLimit && rateLimit.request_count >= 50) { // 50 requests per hour
+      console.log('Rate limit exceeded for user:', user.id);
       return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
         status: 429,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -73,6 +84,7 @@ Deno.serve(async (req) => {
       });
 
     const { message, conversationId, intent }: ChatRequest = await req.json();
+    console.log('Request body:', { message: message.substring(0, 50), conversationId, intent });
 
     // Create or get conversation
     let currentConversationId = conversationId;
@@ -94,6 +106,7 @@ Deno.serve(async (req) => {
         });
       }
       currentConversationId = conversation.id;
+      console.log('Created new conversation:', currentConversationId);
     }
 
     // Save user message to database
@@ -108,6 +121,7 @@ Deno.serve(async (req) => {
     // Call OpenAI API
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiApiKey) {
+      console.error('OpenAI API key not configured');
       return new Response(JSON.stringify({ error: 'OpenAI API key not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -134,6 +148,7 @@ Deno.serve(async (req) => {
 
     systemPrompt += " Always be conversational, helpful, and include appropriate disclaimers for financial actions. Keep responses concise but informative.";
 
+    console.log('Calling OpenAI API');
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -184,6 +199,7 @@ Deno.serve(async (req) => {
       requires_web3: requiresWeb3,
     });
 
+    console.log('AI response generated successfully');
     return new Response(JSON.stringify({ 
       response: finalResponse, 
       conversationId: currentConversationId,
