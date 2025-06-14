@@ -32,7 +32,7 @@ const AIChat = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, session } = useAuth();
 
   const suggestedActions = [
     "Check my portfolio balance",
@@ -73,7 +73,7 @@ const AIChat = () => {
     if (!inputValue.trim()) return;
 
     // Check if user is authenticated
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !session) {
       toast({
         title: "Authentication Required",
         description: "Please sign in to use the AI assistant.",
@@ -100,15 +100,19 @@ const AIChat = () => {
       console.log('Sending message to AI chat function:', {
         message: currentInput,
         conversationId: conversationId,
-        intent: intent
+        intent: intent,
+        user: session.user?.email
       });
       
-      // Call the secure Edge Function
+      // Call the secure Edge Function with proper authorization
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: {
           message: currentInput,
           conversationId: conversationId,
           intent: intent
+        },
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
         }
       });
 
@@ -121,7 +125,7 @@ const AIChat = () => {
         if (error.message?.includes('Rate limit exceeded')) {
           errorMessage = "You've reached the rate limit. Please try again in an hour.";
         } else if (error.message?.includes('Invalid user')) {
-          errorMessage = "Please make sure you're logged in to use the AI assistant.";
+          errorMessage = "Authentication error. Please try signing out and back in.";
         } else if (error.message?.includes('OpenAI API key not configured')) {
           errorMessage = "AI service is currently unavailable. Please try again later.";
         }
@@ -205,7 +209,7 @@ const AIChat = () => {
               portfolio analysis, and blockchain technology.
             </p>
             <Button 
-              onClick={() => window.location.reload()} 
+              onClick={() => window.location.href = '/auth'} 
               className="bg-purple-600 hover:bg-purple-700"
             >
               <LogIn className="w-4 h-4 mr-2" />
