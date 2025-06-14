@@ -60,7 +60,7 @@ const SettingsPanel = () => {
               <Label htmlFor="name" className="text-white">Full Name</Label>
               <Input
                 id="name"
-                defaultValue={user?.name || ''}
+                defaultValue={user?.user_metadata?.name || user?.user_metadata?.full_name || ''}
                 className="bg-slate-800/50 border-purple-800/30 text-white"
               />
             </div>
