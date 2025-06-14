@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Brain, User, Sparkles, AlertTriangle } from "lucide-react";
-import OpenAI from "openai";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -16,17 +17,6 @@ interface Message {
   intent?: string;
   requiresWeb3?: boolean;
 }
-
-interface Intent {
-  type: string;
-  confidence: number;
-  parameters?: Record<string, any>;
-}
-
-const openai = new OpenAI({
-  apiKey: "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",
-  dangerouslyAllowBrowser: true
-});
 
 const AIChat = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -39,11 +29,13 @@ const AIChat = () => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const suggestedActions = [
     "Check my portfolio balance",
-    "What's the safest DeFi protocol?",
+    "What's the safest DeFi protocol?", 
     "How do I stake 100 MATIC?",
     "Explain yield farming risks"
   ];
@@ -54,104 +46,26 @@ const AIChat = () => {
     }
   }, [messages]);
 
-  const recognizeIntent = (input: string): Intent => {
+  const recognizeIntent = (input: string): string => {
     const lowercaseInput = input.toLowerCase();
     
-    // Balance/Portfolio checking
-    if (lowercaseInput.includes('balance') || lowercaseInput.includes('portfolio') || lowercaseInput.includes('check my')) {
-      return { type: 'check_balance', confidence: 0.9 };
+    if (lowercaseInput.includes('balance') || lowercaseInput.includes('portfolio')) {
+      return 'check_balance';
     }
-    
-    // Token swapping
-    if (lowercaseInput.includes('swap') || lowercaseInput.includes('exchange') || lowercaseInput.includes('trade')) {
-      const tokens = extractTokens(input);
-      return { 
-        type: 'swap_token', 
-        confidence: 0.85,
-        parameters: { tokens }
-      };
+    if (lowercaseInput.includes('swap') || lowercaseInput.includes('exchange')) {
+      return 'swap_token';
     }
-    
-    // Staking
     if (lowercaseInput.includes('stake') || lowercaseInput.includes('staking')) {
-      const amount = extractAmount(input);
-      const token = extractTokens(input)[0];
-      return { 
-        type: 'stake_token', 
-        confidence: 0.8,
-        parameters: { amount, token }
-      };
+      return 'stake_token';
+    }
+    if (lowercaseInput.includes('safest') || lowercaseInput.includes('best protocol')) {
+      return 'compare_protocols';
+    }
+    if (lowercaseInput.includes('explain') || lowercaseInput.includes('what is')) {
+      return 'explain_concept';
     }
     
-    // Protocol comparison/safety
-    if (lowercaseInput.includes('safest') || lowercaseInput.includes('best protocol') || lowercaseInput.includes('compare')) {
-      return { type: 'compare_protocols', confidence: 0.7 };
-    }
-    
-    // Explaining concepts
-    if (lowercaseInput.includes('explain') || lowercaseInput.includes('what is') || lowercaseInput.includes('how does')) {
-      return { type: 'explain_concept', confidence: 0.8 };
-    }
-    
-    // General question
-    return { type: 'general_question', confidence: 0.5 };
-  };
-
-  const extractTokens = (input: string): string[] => {
-    const tokenPattern = /\b(ETH|BTC|USDC|USDT|DAI|MATIC|AAVE|UNI|COMP|LINK|DOT|ADA|SOL)\b/gi;
-    return input.match(tokenPattern) || [];
-  };
-
-  const extractAmount = (input: string): string | null => {
-    const amountPattern = /\b(\d+(?:\.\d+)?)\s*(ETH|BTC|USDC|USDT|DAI|MATIC|AAVE|UNI|COMP|LINK|DOT|ADA|SOL)?\b/i;
-    const match = input.match(amountPattern);
-    return match ? match[1] : null;
-  };
-
-  const generateContextualResponse = async (input: string, intent: Intent): Promise<string> => {
-    let systemPrompt = "You are a helpful DeFi AI assistant. ";
-    
-    switch (intent.type) {
-      case 'check_balance':
-        systemPrompt += "The user wants to check their portfolio balance. Ask for their wallet address if not provided, and explain what information you can show them.";
-        break;
-      case 'swap_token':
-        systemPrompt += "The user wants to swap tokens. Provide a step-by-step guide and include important disclaimers about slippage, gas fees, and market volatility.";
-        break;
-      case 'stake_token':
-        systemPrompt += "The user wants to stake tokens. Explain the staking process, rewards, risks, and lock-up periods. Include disclaimers about smart contract risks.";
-        break;
-      case 'compare_protocols':
-        systemPrompt += "The user wants to compare DeFi protocols. Focus on security, TVL, audit history, and risk factors. Be objective and mention that this is not financial advice.";
-        break;
-      case 'explain_concept':
-        systemPrompt += "The user wants to understand a DeFi concept. Provide clear, educational explanations with examples. Break down complex topics into digestible parts.";
-        break;
-      default:
-        systemPrompt += "Provide helpful, accurate information about DeFi and blockchain technology. Be conversational and ask follow-up questions when appropriate.";
-    }
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt + " Always be conversational, helpful, and include appropriate disclaimers for financial actions. Keep responses concise but informative."
-        },
-        {
-          role: "user",
-          content: input
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
-    });
-
-    return completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response. Please try again.";
-  };
-
-  const requiresWeb3Action = (intent: Intent): boolean => {
-    return ['swap_token', 'stake_token', 'check_balance'].includes(intent.type);
+    return 'general_question';
   };
 
   const handleSendMessage = async () => {
@@ -170,38 +84,73 @@ const AIChat = () => {
     setIsLoading(true);
 
     try {
-      // Recognize intent
       const intent = recognizeIntent(currentInput);
-      console.log('Detected intent:', intent);
+      
+      // Call the secure Edge Function
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
+        body: {
+          message: currentInput,
+          conversationId: conversationId,
+          intent: intent
+        }
+      });
 
-      // Generate contextual response
-      const aiResponse = await generateContextualResponse(currentInput, intent);
-      
-      // Add Web3 disclaimer if needed
-      let finalResponse = aiResponse;
-      const needsWeb3 = requiresWeb3Action(intent);
-      
-      if (needsWeb3) {
-        finalResponse += "\n\n⚠️ **Disclaimer**: This action requires Web3 execution. Please ensure you understand the risks and have sufficient gas fees. Always verify transaction details before confirming.";
+      if (error) {
+        console.error('Error calling AI chat function:', error);
+        
+        let errorMessage = "I'm sorry, I encountered an error while processing your request.";
+        if (error.message?.includes('Rate limit exceeded')) {
+          errorMessage = "You've reached the rate limit. Please try again in an hour.";
+        } else if (error.message?.includes('Invalid user')) {
+          errorMessage = "Please make sure you're logged in to use the AI assistant.";
+        }
+
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+
+        const errorMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai',
+          content: errorMessage,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, errorMsg]);
+        return;
+      }
+
+      // Update conversation ID if it's a new conversation
+      if (data.conversationId && !conversationId) {
+        setConversationId(data.conversationId);
       }
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: finalResponse,
+        content: data.response,
         timestamp: new Date(),
-        action: intent.type,
-        intent: intent.type,
-        requiresWeb3: needsWeb3,
+        action: intent,
+        intent: intent,
+        requiresWeb3: data.requiresWeb3,
       };
 
       setMessages(prev => [...prev, aiMessage]);
+
     } catch (error) {
-      console.error('Error calling OpenAI API:', error);
+      console.error('Unexpected error:', error);
+      
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: "I'm sorry, I encountered an error while processing your request. Please try again later.",
+        content: "I'm sorry, I encountered an unexpected error. Please try again later.",
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
