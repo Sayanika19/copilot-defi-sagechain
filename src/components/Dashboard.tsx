@@ -1,8 +1,10 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, DollarSign, Activity, Zap, Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, TrendingDown, DollarSign, Activity, Zap, Shield, RefreshCw } from "lucide-react";
 import { WalletData } from "./WalletConnector";
+import { useWalletData } from "@/hooks/useWalletData";
 
 interface DashboardProps {
   isConnected: boolean;
@@ -10,36 +12,56 @@ interface DashboardProps {
 }
 
 const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
-  // Calculate portfolio value from wallet balance
+  const { assets, transactions, isLoading, error, refetch } = useWalletData(walletData);
+
+  // Calculate portfolio value from real wallet data
   const getPortfolioValue = () => {
-    if (!walletData?.balance) return "$0.00";
-    const ethAmount = parseFloat(walletData.balance.replace(' ETH', ''));
-    const ethPrice = 2800; // Mock ETH price
-    return `$${(ethAmount * ethPrice).toLocaleString()}`;
+    if (!assets) return "$0.00";
+    return `$${assets.totalValue.toLocaleString()}`;
   };
 
   const mockData = {
     totalValue: getPortfolioValue(),
-    change24h: "+12.4%",
-    activePositions: isConnected ? 8 : 0,
-    totalRewards: isConnected ? "$1,247.83" : "$0.00"
+    change24h: assets ? `+${assets.changePercent.toFixed(1)}%` : "+0%",
+    activePositions: assets?.defiPositions.length || 0,
+    totalRewards: assets ? `$${(assets.totalValue * 0.08).toFixed(2)}` : "$0.00", // 8% of portfolio as rewards
+    riskScore: assets && assets.totalValue > 5000 ? 'Medium' : assets && assets.totalValue > 1000 ? 'Low' : 'High'
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-white mb-2">Dashboard</h2>
-        <p className="text-purple-300">Overview of your DeFi portfolio and activities</p>
-        {isConnected && walletData && (
-          <div className="mt-2 p-3 bg-purple-900/20 rounded-lg border border-purple-800/30">
-            <p className="text-sm text-purple-300">
-              Connected: <span className="text-white font-mono">{walletData.address}</span>
-            </p>
-            <p className="text-sm text-purple-300">
-              Balance: <span className="text-green-400 font-medium">{walletData.balance}</span>
-            </p>
-          </div>
-        )}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-white mb-2">Dashboard</h2>
+          <p className="text-purple-300">Overview of your DeFi portfolio and activities</p>
+          {isConnected && walletData && (
+            <div className="mt-2 p-3 bg-purple-900/20 rounded-lg border border-purple-800/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-purple-300">
+                    Connected: <span className="text-white font-mono">{walletData.address}</span>
+                  </p>
+                  <p className="text-sm text-purple-300">
+                    Balance: <span className="text-green-400 font-medium">{walletData.balance}</span>
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={refetch}
+                  disabled={isLoading}
+                  className="border-purple-600 text-purple-400"
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </div>
+              {error && (
+                <p className="text-sm text-red-400 mt-2">Error: {error}</p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -53,7 +75,7 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
             <div className="text-2xl font-bold text-white">{mockData.totalValue}</div>
             <p className="text-xs text-green-400 flex items-center mt-1">
               <TrendingUp className="w-3 h-3 mr-1" />
-              {isConnected ? mockData.change24h : '0%'} from yesterday
+              {mockData.change24h} from yesterday
             </p>
           </CardContent>
         </Card>
@@ -65,7 +87,9 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">{mockData.activePositions}</div>
-            <p className="text-xs text-blue-400 mt-1">{isConnected ? 'Across 4 protocols' : 'Connect wallet to view'}</p>
+            <p className="text-xs text-blue-400 mt-1">
+              {isConnected ? `Across ${assets?.activeChains || 1} protocols` : 'Connect wallet to view'}
+            </p>
           </CardContent>
         </Card>
 
@@ -86,8 +110,10 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
             <Shield className="h-4 w-4 text-purple-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{isConnected ? 'Medium' : 'N/A'}</div>
-            <p className="text-xs text-purple-400 mt-1">{isConnected ? 'Well diversified' : 'Connect wallet'}</p>
+            <div className="text-2xl font-bold text-white">{isConnected ? mockData.riskScore : 'N/A'}</div>
+            <p className="text-xs text-purple-400 mt-1">
+              {isConnected ? 'Based on portfolio' : 'Connect wallet'}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -100,13 +126,9 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
             <CardDescription className="text-purple-300">Your latest DeFi activities</CardDescription>
           </CardHeader>
           <CardContent>
-            {isConnected ? (
+            {isConnected && transactions.length > 0 ? (
               <div className="space-y-4">
-                {[
-                  { action: 'Supplied USDC', amount: '$2,500', protocol: 'Aave', time: '2 hours ago', type: 'supply' },
-                  { action: 'Claimed rewards', amount: '$47.32', protocol: 'Compound', time: '1 day ago', type: 'reward' },
-                  { action: 'Swapped ETH → USDT', amount: '$1,200', protocol: 'Uniswap', time: '2 days ago', type: 'swap' },
-                ].map((tx, index) => (
+                {transactions.slice(0, 3).map((tx, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
                     <div>
                       <p className="text-white font-medium">{tx.action}</p>
@@ -114,7 +136,7 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
                     </div>
                     <div className="text-right">
                       <p className={`font-medium ${
-                        tx.type === 'reward' ? 'text-green-400' : 'text-white'
+                        tx.type === 'reward' || tx.type === 'receive' ? 'text-green-400' : 'text-white'
                       }`}>{tx.amount}</p>
                       <Badge variant="outline" className="text-xs border-purple-800/30">
                         {tx.type}
@@ -122,6 +144,14 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : isConnected ? (
+              <div className="text-center py-8">
+                {isLoading ? (
+                  <p className="text-purple-300">Loading transactions...</p>
+                ) : (
+                  <p className="text-purple-300">No recent transactions found</p>
+                )}
               </div>
             ) : (
               <div className="text-center py-8">
@@ -141,7 +171,7 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
               {[
                 { 
                   title: 'High Yield Alert', 
-                  description: 'USDC lending on Aave shows 8.2% APY', 
+                  description: assets && assets.totalValue > 1000 ? 'Consider USDC lending on Aave (8.2% APY)' : 'Add more funds for DeFi opportunities', 
                   priority: 'high' 
                 },
                 { 
@@ -150,8 +180,8 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
                   priority: 'medium' 
                 },
                 { 
-                  title: 'Governance Proposal', 
-                  description: 'Vote on Compound proposal #127', 
+                  title: 'Portfolio Rebalancing', 
+                  description: assets && assets.tokens.length > 1 ? 'Consider diversifying holdings' : 'Add more assets for better diversification', 
                   priority: 'low' 
                 },
               ].map((opportunity, index) => (
