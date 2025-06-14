@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, Copy, ExternalLink, ChevronDown, Loader2 } from "lucide-react";
+import { Wallet, Copy, ExternalLink, ChevronDown, Loader2, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface WalletConnectorProps {
@@ -37,6 +36,7 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
   const [walletBalance, setWalletBalance] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectedWalletType, setConnectedWalletType] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
   const { toast } = useToast();
 
   const wallets = [
@@ -246,6 +246,7 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
     setWalletBalance('');
     setConnectedWalletType('');
     setIsOpen(false);
+    setShowDropdown(false);
     
     // Call the parent's disconnect handler
     if (onDisconnect) {
@@ -265,76 +266,129 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
 
   if (isConnected && walletAddress) {
     return (
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" className="border-purple-600 text-purple-400 hover:bg-purple-600/10">
-            <Wallet className="w-4 h-4 mr-2" />
-            {formatAddress(walletAddress)}
-            <ChevronDown className="w-4 h-4 ml-2" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="bg-slate-900 border-purple-800/30">
-          <DialogHeader>
-            <DialogTitle className="text-white">Wallet Details</DialogTitle>
-            <DialogDescription className="text-purple-300">
-              Manage your connected wallet
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <Card className="bg-black/40 border-purple-800/30">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
+      <div className="relative">
+        <Button 
+          variant="outline" 
+          className="border-purple-600 text-purple-400 hover:bg-purple-600/10"
+          onClick={() => setShowDropdown(!showDropdown)}
+        >
+          <Wallet className="w-4 h-4 mr-2" />
+          {formatAddress(walletAddress)}
+          <ChevronDown className="w-4 h-4 ml-2" />
+        </Button>
+        
+        {showDropdown && (
+          <div className="absolute top-full right-0 mt-2 w-64 bg-slate-900 border border-purple-800/30 rounded-lg shadow-xl z-50 backdrop-blur-xl">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-2">
+                  <span className="text-2xl">{connectedWalletType === 'MetaMask' ? '🦊' : '🔗'}</span>
+                  <span className="text-white font-medium">{connectedWalletType}</span>
+                </div>
+                <Badge className="bg-green-600/20 text-green-400">Connected</Badge>
+              </div>
+              
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-purple-300">Address</span>
                   <div className="flex items-center space-x-2">
-                    <span className="text-2xl">{connectedWalletType === 'MetaMask' ? '🦊' : '🔗'}</span>
-                    <span className="text-white font-medium">{connectedWalletType}</span>
+                    <span className="text-white font-mono text-sm">{formatAddress(walletAddress)}</span>
+                    <Button size="sm" variant="ghost" onClick={copyAddress} className="h-6 w-6 p-0">
+                      <Copy className="w-3 h-3" />
+                    </Button>
                   </div>
-                  <Badge className="bg-green-600/20 text-green-400">Connected</Badge>
                 </div>
                 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-purple-300">Address</span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-white font-mono text-sm">{walletAddress}</span>
-                      <Button size="sm" variant="ghost" onClick={copyAddress}>
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-purple-300">Balance</span>
-                    <span className="text-white font-medium">{walletBalance}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-purple-300">Network</span>
-                    <div className="flex items-center space-x-1">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                      <span className="text-white text-sm">Ethereum Mainnet</span>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-purple-300">Balance</span>
+                  <span className="text-white font-medium">{walletBalance}</span>
                 </div>
-              </CardContent>
-            </Card>
-            
-            <div className="flex space-x-2">
-              <Button variant="outline" className="flex-1 border-purple-600 text-purple-400">
-                <ExternalLink className="w-4 h-4 mr-2" />
-                View on Etherscan
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex-1 border-red-600 text-red-400 hover:bg-red-600/10"
-                onClick={disconnectWallet}
-              >
-                Disconnect
-              </Button>
+              </div>
+              
+              <div className="flex space-x-2">
+                <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="flex-1 border-purple-600 text-purple-400 text-xs">
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      Details
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-slate-900 border-purple-800/30">
+                    <DialogHeader>
+                      <DialogTitle className="text-white">Wallet Details</DialogTitle>
+                      <DialogDescription className="text-purple-300">
+                        Manage your connected wallet
+                      </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4">
+                      <Card className="bg-black/40 border-purple-800/30">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-2xl">{connectedWalletType === 'MetaMask' ? '🦊' : '🔗'}</span>
+                              <span className="text-white font-medium">{connectedWalletType}</span>
+                            </div>
+                            <Badge className="bg-green-600/20 text-green-400">Connected</Badge>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-purple-300">Address</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-white font-mono text-sm">{walletAddress}</span>
+                                <Button size="sm" variant="ghost" onClick={copyAddress}>
+                                  <Copy className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-purple-300">Balance</span>
+                              <span className="text-white font-medium">{walletBalance}</span>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-purple-300">Network</span>
+                              <div className="flex items-center space-x-1">
+                                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                                <span className="text-white text-sm">Ethereum Mainnet</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      <div className="flex space-x-2">
+                        <Button variant="outline" className="flex-1 border-purple-600 text-purple-400">
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          View on Etherscan
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="flex-1 border-red-600 text-red-400 hover:bg-red-600/10"
+                          onClick={disconnectWallet}
+                        >
+                          Disconnect
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                
+                <Button 
+                  variant="outline" 
+                  className="flex-1 border-red-600 text-red-400 hover:bg-red-600/10 text-xs"
+                  onClick={disconnectWallet}
+                >
+                  <LogOut className="w-3 h-3 mr-1" />
+                  Disconnect
+                </Button>
+              </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        )}
+      </div>
     );
   }
 
