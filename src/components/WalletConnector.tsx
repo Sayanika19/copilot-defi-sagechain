@@ -1,26 +1,43 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, Copy, ExternalLink, ChevronDown } from "lucide-react";
+import { Wallet, Copy, ExternalLink, ChevronDown, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface WalletConnectorProps {
   isConnected: boolean;
   onConnect: () => void;
 }
 
+declare global {
+  interface Window {
+    ethereum?: {
+      request: (args: { method: string; params?: any[] }) => Promise<any>;
+      on: (event: string, callback: (accounts: string[]) => void) => void;
+      removeListener: (event: string, callback: (accounts: string[]) => void) => void;
+      isMetaMask?: boolean;
+    };
+  }
+}
+
 const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState('');
+  const [walletAddress, setWalletAddress] = useState('');
+  const [walletBalance, setWalletBalance] = useState('');
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectedWalletType, setConnectedWalletType] = useState('');
+  const { toast } = useToast();
 
   const wallets = [
     { 
       name: 'MetaMask', 
       icon: '🦊', 
       description: 'Most popular Ethereum wallet',
-      installed: true 
+      installed: typeof window !== 'undefined' && window.ethereum?.isMetaMask 
     },
     { 
       name: 'WalletConnect', 
@@ -28,43 +45,192 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
       description: 'Connect via QR code',
       installed: true 
     },
-    { 
-      name: 'Coinbase Wallet', 
-      icon: '🌐', 
-      description: 'Coinbase\'s self-custody wallet',
-      installed: false 
-    },
-    { 
-      name: 'Rainbow', 
-      icon: '🌈', 
-      description: 'Fun, simple, and secure',
-      installed: false 
-    },
   ];
 
-  const mockAddress = '0x742d...8f3A';
-  const mockBalance = '$12,547.83';
+  // Check if wallet is already connected
+  useEffect(() => {
+    const checkConnection = async () => {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) {
+            setWalletAddress(accounts[0]);
+            await updateBalance(accounts[0]);
+            setConnectedWalletType('MetaMask');
+            onConnect();
+          }
+        } catch (error) {
+          console.error('Error checking wallet connection:', error);
+        }
+      }
+    };
 
-  const handleWalletSelect = (walletName: string) => {
+    checkConnection();
+  }, [onConnect]);
+
+  // Listen for account changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.ethereum) {
+      const handleAccountsChanged = (accounts: string[]) => {
+        if (accounts.length === 0) {
+          // User disconnected wallet
+          setWalletAddress('');
+          setWalletBalance('');
+          setConnectedWalletType('');
+        } else {
+          setWalletAddress(accounts[0]);
+          updateBalance(accounts[0]);
+        }
+      };
+
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      
+      return () => {
+        if (window.ethereum?.removeListener) {
+          window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        }
+      };
+    }
+  }, []);
+
+  const updateBalance = async (address: string) => {
+    try {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        const balance = await window.ethereum.request({
+          method: 'eth_getBalance',
+          params: [address, 'latest']
+        });
+        
+        // Convert from wei to ETH
+        const balanceInEth = parseInt(balance, 16) / Math.pow(10, 18);
+        setWalletBalance(`${balanceInEth.toFixed(4)} ETH`);
+      }
+    } catch (error) {
+      console.error('Error fetching balance:', error);
+      setWalletBalance('Unable to fetch');
+    }
+  };
+
+  const connectMetaMask = async () => {
+    if (typeof window === 'undefined' || !window.ethereum) {
+      toast({
+        title: "MetaMask not found",
+        description: "Please install MetaMask extension to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsConnecting(true);
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts'
+      });
+
+      if (accounts.length > 0) {
+        setWalletAddress(accounts[0]);
+        await updateBalance(accounts[0]);
+        setConnectedWalletType('MetaMask');
+        onConnect();
+        setIsOpen(false);
+        
+        toast({
+          title: "Wallet Connected",
+          description: "MetaMask wallet connected successfully!",
+        });
+      }
+    } catch (error: any) {
+      console.error('MetaMask connection error:', error);
+      toast({
+        title: "Connection Failed",
+        description: error.message || "Failed to connect MetaMask wallet.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsConnecting(false);
+      setSelectedWallet('');
+    }
+  };
+
+  const connectWalletConnect = async () => {
+    try {
+      setIsConnecting(true);
+      
+      // For now, we'll simulate WalletConnect functionality
+      // In a real implementation, you would initialize WalletConnect provider here
+      toast({
+        title: "WalletConnect",
+        description: "Please scan the QR code with your mobile wallet app.",
+      });
+
+      // Simulate connection delay
+      setTimeout(() => {
+        const mockAddress = '0x742d35Cc6B5C73Ff5cb78a3e7B9B6834567f8f3A';
+        setWalletAddress(mockAddress);
+        setWalletBalance('2.5479 ETH');
+        setConnectedWalletType('WalletConnect');
+        onConnect();
+        setIsOpen(false);
+        setIsConnecting(false);
+        setSelectedWallet('');
+        
+        toast({
+          title: "Wallet Connected",
+          description: "WalletConnect wallet connected successfully!",
+        });
+      }, 3000);
+    } catch (error: any) {
+      console.error('WalletConnect connection error:', error);
+      toast({
+        title: "Connection Failed",
+        description: "Failed to connect via WalletConnect.",
+        variant: "destructive",
+      });
+      setIsConnecting(false);
+      setSelectedWallet('');
+    }
+  };
+
+  const handleWalletSelect = async (walletName: string) => {
     setSelectedWallet(walletName);
-    // Simulate connection delay
-    setTimeout(() => {
-      onConnect();
-      setIsOpen(false);
-    }, 1500);
+    
+    if (walletName === 'MetaMask') {
+      await connectMetaMask();
+    } else if (walletName === 'WalletConnect') {
+      await connectWalletConnect();
+    }
   };
 
   const copyAddress = () => {
-    navigator.clipboard.writeText('0x742d35Cc6B5C73Ff5cb78a3e7B9B6834567f8f3A');
+    navigator.clipboard.writeText(walletAddress);
+    toast({
+      title: "Address Copied",
+      description: "Wallet address copied to clipboard!",
+    });
   };
 
-  if (isConnected) {
+  const disconnectWallet = () => {
+    setWalletAddress('');
+    setWalletBalance('');
+    setConnectedWalletType('');
+    toast({
+      title: "Wallet Disconnected",
+      description: "Your wallet has been disconnected.",
+    });
+  };
+
+  const formatAddress = (address: string) => {
+    if (!address) return '';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  if (isConnected && walletAddress) {
     return (
       <Dialog>
         <DialogTrigger asChild>
           <Button variant="outline" className="border-purple-600 text-purple-400 hover:bg-purple-600/10">
             <Wallet className="w-4 h-4 mr-2" />
-            {mockAddress}
+            {formatAddress(walletAddress)}
             <ChevronDown className="w-4 h-4 ml-2" />
           </Button>
         </DialogTrigger>
@@ -81,8 +247,8 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
-                    <span className="text-2xl">🦊</span>
-                    <span className="text-white font-medium">MetaMask</span>
+                    <span className="text-2xl">{connectedWalletType === 'MetaMask' ? '🦊' : '🔗'}</span>
+                    <span className="text-white font-medium">{connectedWalletType}</span>
                   </div>
                   <Badge className="bg-green-600/20 text-green-400">Connected</Badge>
                 </div>
@@ -91,7 +257,7 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-purple-300">Address</span>
                     <div className="flex items-center space-x-2">
-                      <span className="text-white font-mono text-sm">0x742d35Cc6B5C73Ff5cb78a3e7B9B6834567f8f3A</span>
+                      <span className="text-white font-mono text-sm">{walletAddress}</span>
                       <Button size="sm" variant="ghost" onClick={copyAddress}>
                         <Copy className="w-4 h-4" />
                       </Button>
@@ -99,8 +265,8 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-purple-300">Total Balance</span>
-                    <span className="text-white font-medium">{mockBalance}</span>
+                    <span className="text-sm text-purple-300">Balance</span>
+                    <span className="text-white font-medium">{walletBalance}</span>
                   </div>
                   
                   <div className="flex items-center justify-between">
@@ -119,7 +285,11 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
                 <ExternalLink className="w-4 h-4 mr-2" />
                 View on Etherscan
               </Button>
-              <Button variant="outline" className="flex-1 border-red-600 text-red-400">
+              <Button 
+                variant="outline" 
+                className="flex-1 border-red-600 text-red-400"
+                onClick={disconnectWallet}
+              >
                 Disconnect
               </Button>
             </div>
@@ -150,10 +320,10 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
             <button
               key={wallet.name}
               onClick={() => handleWalletSelect(wallet.name)}
-              disabled={!wallet.installed || selectedWallet === wallet.name}
+              disabled={!wallet.installed || isConnecting}
               className={`w-full p-4 rounded-lg border transition-all duration-200 text-left ${
-                wallet.installed
-                  ? selectedWallet === wallet.name
+                wallet.installed && !isConnecting
+                  ? selectedWallet === wallet.name || isConnecting
                     ? 'border-purple-600 bg-purple-600/20'
                     : 'border-purple-800/30 bg-slate-800/30 hover:border-purple-600/50 hover:bg-purple-600/10'
                   : 'border-slate-700 bg-slate-800/20 opacity-50'
@@ -169,8 +339,8 @@ const WalletConnector = ({ isConnected, onConnect }: WalletConnectorProps) => {
                         Not Installed
                       </Badge>
                     )}
-                    {selectedWallet === wallet.name && (
-                      <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
+                    {(selectedWallet === wallet.name && isConnecting) && (
+                      <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
                     )}
                   </div>
                   <p className="text-sm text-purple-300 mt-1">{wallet.description}</p>
