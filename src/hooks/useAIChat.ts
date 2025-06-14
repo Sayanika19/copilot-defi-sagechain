@@ -124,18 +124,21 @@ export const useAIChat = () => {
           const chunk = new TextDecoder().decode(value);
           console.log('Frontend received chunk:', chunk);
           
-          // Process each line in the chunk
-          const lines = chunk.split('\n').filter(line => line.trim());
+          // Process server-sent events format
+          const lines = chunk.split('\n');
           
           for (const line of lines) {
-            if (line === 'data: [DONE]') {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) continue;
+            
+            if (trimmedLine === 'data: [DONE]') {
               console.log('Stream completion signal received');
               continue;
             }
             
-            if (line.startsWith('data: ')) {
+            if (trimmedLine.startsWith('data: ')) {
               try {
-                const dataStr = line.slice(6).trim();
+                const dataStr = trimmedLine.slice(6).trim();
                 if (dataStr) {
                   const data = JSON.parse(dataStr);
                   if (data.content) {
@@ -151,7 +154,7 @@ export const useAIChat = () => {
                   }
                 }
               } catch (parseError) {
-                console.log('Error parsing data line:', line, parseError);
+                console.log('Error parsing SSE data:', trimmedLine, parseError);
               }
             }
           }
