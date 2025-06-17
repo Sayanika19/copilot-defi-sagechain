@@ -1,9 +1,8 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { BookOpen, Play, Clock, Star, TrendingUp, Shield, Zap, ExternalLink, Youtube } from "lucide-react";
+import { BookOpen, Play, Clock, Star, TrendingUp, Shield, Zap, ExternalLink, Youtube, DollarSign } from "lucide-react";
 
 const EducationHub = () => {
   const courses = [
@@ -237,6 +236,91 @@ const EducationHub = () => {
                       <p className="text-sm text-green-200">• Identify price discrepancies across DEXs</p>
                       <p className="text-sm text-green-200">• Execute trades quickly before price correction</p>
                       <p className="text-sm text-green-200">• Account for gas fees and slippage</p>
+                    </div>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="borrowing-lending" className="border-purple-800/30">
+              <AccordionTrigger className="text-white hover:text-purple-300">
+                <div className="flex items-center gap-3">
+                  <DollarSign className="w-5 h-5 text-orange-400" />
+                  <div className="text-left">
+                    <h3 className="font-semibold">Borrowing & Lending</h3>
+                    <p className="text-sm text-purple-300">Cross-chain lending and borrowing solutions</p>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-4">
+                <div className="space-y-6">
+                  <div className="p-4 bg-orange-900/30 rounded-lg">
+                    <h4 className="text-white font-semibold mb-2">Lend on Multiple Chains</h4>
+                    <p className="text-sm text-orange-300 mb-3">Maximize your returns across different blockchains</p>
+                    <p className="text-sm text-orange-200 mb-4">
+                      Users can lend their assets on one blockchain while benefiting from competitive interest rates. This cross-chain approach allows you to take advantage of the best rates available across different networks, maximizing your passive income potential.
+                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-orange-300">Key Benefits:</p>
+                      <p className="text-sm text-orange-200">• Access to competitive interest rates across chains</p>
+                      <p className="text-sm text-orange-200">• Diversify lending exposure across multiple networks</p>
+                      <p className="text-sm text-orange-200">• Optimize returns based on market conditions</p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-orange-900/30 rounded-lg">
+                    <h4 className="text-white font-semibold mb-2">Cross-Chain Deposits</h4>
+                    <p className="text-sm text-orange-300 mb-3">Seamlessly deposit assets across different blockchains</p>
+                    <p className="text-sm text-orange-200 mb-4">
+                      Easily deposit assets into different chains, maximizing yield opportunities and diversifying portfolios. This feature enables users to move capital efficiently between networks to capture the best available opportunities.
+                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-orange-300">Key Benefits:</p>
+                      <p className="text-sm text-orange-200">• Maximize yield opportunities across chains</p>
+                      <p className="text-sm text-orange-200">• Portfolio diversification across networks</p>
+                      <p className="text-sm text-orange-200">• Efficient capital allocation</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-orange-900/30 rounded-lg">
+                    <h4 className="text-white font-semibold mb-2">Flexible Repayment Options</h4>
+                    <p className="text-sm text-orange-300 mb-3">Manage your loans across any supported chain</p>
+                    <p className="text-sm text-orange-200 mb-4">
+                      Repay loans on any supported chain, providing users with the freedom to manage their liabilities efficiently. This flexibility allows you to optimize your repayment strategy based on available liquidity and transaction costs.
+                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-orange-300">Key Benefits:</p>
+                      <p className="text-sm text-orange-200">• Repay from any supported blockchain</p>
+                      <p className="text-sm text-orange-200">• Optimize for lowest transaction costs</p>
+                      <p className="text-sm text-orange-200">• Enhanced liquidity management</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-orange-900/30 rounded-lg">
+                    <h4 className="text-white font-semibold mb-2">Instant Redemption</h4>
+                    <p className="text-sm text-orange-300 mb-3">Access your assets when you need them</p>
+                    <p className="text-sm text-orange-200 mb-4">
+                      Redeem assets across chains instantly, ensuring liquidity and accessibility when needed. This feature provides peace of mind knowing that your assets remain accessible regardless of which chain they're deployed on.
+                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-orange-300">Key Benefits:</p>
+                      <p className="text-sm text-orange-200">• Instant asset accessibility</p>
+                      <p className="text-sm text-orange-200">• Cross-chain liquidity solutions</p>
+                      <p className="text-sm text-orange-200">• Emergency fund access</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-orange-900/30 rounded-lg">
+                    <h4 className="text-white font-semibold mb-2">Security & Interface</h4>
+                    <p className="text-sm text-orange-300 mb-3">Built for safety and ease of use</p>
+                    <p className="text-sm text-orange-200 mb-4">
+                      Our platform features a user-friendly interface that simplifies the cross-chain experience for both novice and experienced users, combined with robust security protocols to ensure the safety of user assets and transactions.
+                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-orange-300">Key Features:</p>
+                      <p className="text-sm text-orange-200">• Intuitive and clean interface design</p>
+                      <p className="text-sm text-orange-200">• Top-tier security protocols</p>
+                      <p className="text-sm text-orange-200">• Suitable for all experience levels</p>
                     </div>
                   </div>
                 </div>
