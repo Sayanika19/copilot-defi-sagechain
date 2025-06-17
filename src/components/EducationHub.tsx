@@ -2,6 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BookOpen, Play, Clock, Star, TrendingUp, Shield, Zap, ExternalLink, Youtube } from "lucide-react";
 
 const EducationHub = () => {
@@ -101,89 +102,6 @@ const EducationHub = () => {
     }
   ];
 
-  const fundamentalsContent = [
-    {
-      title: "What is DeFi?",
-      description: "Understanding decentralized finance principles",
-      content: "Decentralized Finance (DeFi) is a blockchain-based form of finance that does not rely on central financial intermediaries such as brokerages, exchanges, or banks. Instead, it utilizes smart contracts on blockchains, the most common being Ethereum. DeFi platforms allow people to lend or borrow funds from others, speculate on price movements using derivatives, trade cryptocurrencies, insure against risks, and earn interest in savings-like accounts.",
-      keyPoints: [
-        "No central authority or intermediaries",
-        "Built on blockchain technology (primarily Ethereum)",
-        "Uses smart contracts for automated execution",
-        "Provides financial services without traditional banks",
-        "Offers lending, borrowing, trading, and earning opportunities"
-      ]
-    },
-    {
-      title: "Blockchain Basics",
-      description: "How blockchain technology enables DeFi",
-      content: "Blockchain is the foundational technology that makes DeFi possible. It's a distributed ledger that maintains a continuously growing list of records, called blocks, which are linked and secured using cryptography. Each block contains a cryptographic hash of the previous block, a timestamp, and transaction data.",
-      keyPoints: [
-        "Immutable and transparent transaction records",
-        "Decentralized network of nodes validates transactions",
-        "Smart contracts enable programmable money",
-        "No single point of failure",
-        "Permissionless access to financial services"
-      ]
-    }
-  ];
-
-  const strategiesContent = [
-    {
-      title: "Yield Farming",
-      description: "Maximize returns through liquidity provision",
-      content: "Yield farming involves lending cryptocurrency to earn rewards in the form of additional cryptocurrency. Users provide liquidity to DeFi protocols and earn fees, interest, or governance tokens as rewards. This strategy requires careful analysis of risks and returns across different protocols.",
-      keyPoints: [
-        "Provide liquidity to earn passive income",
-        "Compare APY rates across different protocols",
-        "Understand impermanent loss risks",
-        "Consider gas fees and transaction costs",
-        "Monitor protocol security and audit reports"
-      ]
-    },
-    {
-      title: "Arbitrage Trading",
-      description: "Profit from price differences across platforms",
-      content: "Arbitrage trading in DeFi involves exploiting price differences of the same asset across different decentralized exchanges (DEXs). Traders buy an asset on one platform where the price is lower and simultaneously sell it on another platform where the price is higher, profiting from the price difference.",
-      keyPoints: [
-        "Identify price discrepancies across DEXs",
-        "Execute trades quickly before price correction",
-        "Account for gas fees and slippage",
-        "Use flash loans for capital efficiency",
-        "Monitor multiple exchanges simultaneously"
-      ]
-    }
-  ];
-
-  const securityContent = [
-    {
-      title: "Wallet Security",
-      description: "Protect your digital assets",
-      content: "Wallet security is paramount in DeFi. Your wallet is your gateway to the decentralized world, and losing access or having it compromised can result in permanent loss of funds. Understanding proper wallet security practices is essential for safe DeFi participation.",
-      keyPoints: [
-        "Never share your private keys or seed phrases",
-        "Use hardware wallets for large amounts",
-        "Keep software wallets updated",
-        "Use strong, unique passwords",
-        "Enable two-factor authentication where available",
-        "Be wary of phishing attempts"
-      ]
-    },
-    {
-      title: "Smart Contract Risks",
-      description: "Understanding and mitigating risks",
-      content: "Smart contracts are self-executing contracts with terms directly written into code. While they eliminate the need for intermediaries, they also introduce unique risks including bugs, exploits, and governance risks. Understanding these risks is crucial for safe DeFi participation.",
-      keyPoints: [
-        "Code is immutable and may contain bugs",
-        "Audit reports don't guarantee complete safety",
-        "Flash loan attacks and other exploit vectors",
-        "Governance token risks and centralization",
-        "Always start with small amounts when testing",
-        "Research protocol teams and their track record"
-      ]
-    }
-  ];
-
   return (
     <div className="space-y-6">
       <div>
@@ -229,95 +147,147 @@ const EducationHub = () => {
         </CardContent>
       </Card>
 
-      {/* Course Categories with Detailed Content */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-blue-400" />
-              Fundamentals
-            </CardTitle>
-            <CardDescription className="text-purple-300">
-              Start your DeFi journey with the basics
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {fundamentalsContent.map((item, index) => (
-                <div key={index} className="p-4 bg-blue-900/30 rounded-lg">
-                  <h4 className="text-white font-medium mb-2">{item.title}</h4>
-                  <p className="text-sm text-blue-300 mb-3">{item.description}</p>
-                  <p className="text-xs text-blue-200 mb-3">{item.content}</p>
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-blue-300">Key Points:</p>
-                    {item.keyPoints.slice(0, 3).map((point, idx) => (
-                      <p key={idx} className="text-xs text-blue-200">• {point}</p>
-                    ))}
+      {/* Learning Categories with Detailed Content */}
+      <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
+        <CardHeader>
+          <CardTitle className="text-white">Learning Categories</CardTitle>
+          <CardDescription className="text-purple-300">
+            Explore detailed content for each learning category
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="fundamentals" className="border-purple-800/30">
+              <AccordionTrigger className="text-white hover:text-purple-300">
+                <div className="flex items-center gap-3">
+                  <BookOpen className="w-5 h-5 text-blue-400" />
+                  <div className="text-left">
+                    <h3 className="font-semibold">Fundamentals</h3>
+                    <p className="text-sm text-purple-300">Start your DeFi journey with the basics</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </AccordionTrigger>
+              <AccordionContent className="pt-4">
+                <div className="space-y-6">
+                  <div className="p-4 bg-blue-900/30 rounded-lg">
+                    <h4 className="text-white font-semibold mb-2">What is DeFi?</h4>
+                    <p className="text-sm text-blue-300 mb-3">Understanding decentralized finance principles</p>
+                    <p className="text-sm text-blue-200 mb-4">
+                      Decentralized Finance (DeFi) is a blockchain-based form of finance that does not rely on central financial intermediaries such as brokerages, exchanges, or banks. Instead, it utilizes smart contracts on blockchains, the most common being Ethereum. DeFi platforms allow people to lend or borrow funds from others, speculate on price movements using derivatives, trade cryptocurrencies, insure against risks, and earn interest in savings-like accounts.
+                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-blue-300">Key Points:</p>
+                      <p className="text-sm text-blue-200">• No central authority or intermediaries</p>
+                      <p className="text-sm text-blue-200">• Built on blockchain technology (primarily Ethereum)</p>
+                      <p className="text-sm text-blue-200">• Uses smart contracts for automated execution</p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-blue-900/30 rounded-lg">
+                    <h4 className="text-white font-semibold mb-2">Blockchain Basics</h4>
+                    <p className="text-sm text-blue-300 mb-3">How blockchain technology enables DeFi</p>
+                    <p className="text-sm text-blue-200 mb-4">
+                      Blockchain is the foundational technology that makes DeFi possible. It's a distributed ledger that maintains a continuously growing list of records, called blocks, which are linked and secured using cryptography. Each block contains a cryptographic hash of the previous block, a timestamp, and transaction data.
+                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-blue-300">Key Points:</p>
+                      <p className="text-sm text-blue-200">• Immutable and transparent transaction records</p>
+                      <p className="text-sm text-blue-200">• Decentralized network of nodes validates transactions</p>
+                      <p className="text-sm text-blue-200">• Smart contracts enable programmable money</p>
+                    </div>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-        <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-green-400" />
-              Strategies
-            </CardTitle>
-            <CardDescription className="text-purple-300">
-              Advanced trading and yield strategies
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {strategiesContent.map((item, index) => (
-                <div key={index} className="p-4 bg-green-900/30 rounded-lg">
-                  <h4 className="text-white font-medium mb-2">{item.title}</h4>
-                  <p className="text-sm text-green-300 mb-3">{item.description}</p>
-                  <p className="text-xs text-green-200 mb-3">{item.content}</p>
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-green-300">Key Points:</p>
-                    {item.keyPoints.slice(0, 3).map((point, idx) => (
-                      <p key={idx} className="text-xs text-green-200">• {point}</p>
-                    ))}
+            <AccordionItem value="strategies" className="border-purple-800/30">
+              <AccordionTrigger className="text-white hover:text-purple-300">
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="w-5 h-5 text-green-400" />
+                  <div className="text-left">
+                    <h3 className="font-semibold">Strategies</h3>
+                    <p className="text-sm text-purple-300">Advanced trading and yield strategies</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </AccordionTrigger>
+              <AccordionContent className="pt-4">
+                <div className="space-y-6">
+                  <div className="p-4 bg-green-900/30 rounded-lg">
+                    <h4 className="text-white font-semibold mb-2">Yield Farming</h4>
+                    <p className="text-sm text-green-300 mb-3">Maximize returns through liquidity provision</p>
+                    <p className="text-sm text-green-200 mb-4">
+                      Yield farming involves lending cryptocurrency to earn rewards in the form of additional cryptocurrency. Users provide liquidity to DeFi protocols and earn fees, interest, or governance tokens as rewards. This strategy requires careful analysis of risks and returns across different protocols.
+                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-green-300">Key Points:</p>
+                      <p className="text-sm text-green-200">• Provide liquidity to earn passive income</p>
+                      <p className="text-sm text-green-200">• Compare APY rates across different protocols</p>
+                      <p className="text-sm text-green-200">• Understand impermanent loss risks</p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-green-900/30 rounded-lg">
+                    <h4 className="text-white font-semibold mb-2">Arbitrage Trading</h4>
+                    <p className="text-sm text-green-300 mb-3">Profit from price differences across platforms</p>
+                    <p className="text-sm text-green-200 mb-4">
+                      Arbitrage trading in DeFi involves exploiting price differences of the same asset across different decentralized exchanges (DEXs). Traders buy an asset on one platform where the price is lower and simultaneously sell it on another platform where the price is higher, profiting from the price difference.
+                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-green-300">Key Points:</p>
+                      <p className="text-sm text-green-200">• Identify price discrepancies across DEXs</p>
+                      <p className="text-sm text-green-200">• Execute trades quickly before price correction</p>
+                      <p className="text-sm text-green-200">• Account for gas fees and slippage</p>
+                    </div>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-        <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Shield className="w-5 h-5 text-red-400" />
-              Security
-            </CardTitle>
-            <CardDescription className="text-purple-300">
-              Stay safe in the DeFi ecosystem
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {securityContent.map((item, index) => (
-                <div key={index} className="p-4 bg-red-900/30 rounded-lg">
-                  <h4 className="text-white font-medium mb-2">{item.title}</h4>
-                  <p className="text-sm text-red-300 mb-3">{item.description}</p>
-                  <p className="text-xs text-red-200 mb-3">{item.content}</p>
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-red-300">Key Points:</p>
-                    {item.keyPoints.slice(0, 3).map((point, idx) => (
-                      <p key={idx} className="text-xs text-red-200">• {point}</p>
-                    ))}
+            <AccordionItem value="security" className="border-purple-800/30">
+              <AccordionTrigger className="text-white hover:text-purple-300">
+                <div className="flex items-center gap-3">
+                  <Shield className="w-5 h-5 text-red-400" />
+                  <div className="text-left">
+                    <h3 className="font-semibold">Security</h3>
+                    <p className="text-sm text-purple-300">Stay safe in the DeFi ecosystem</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-4">
+                <div className="space-y-6">
+                  <div className="p-4 bg-red-900/30 rounded-lg">
+                    <h4 className="text-white font-semibold mb-2">Wallet Security</h4>
+                    <p className="text-sm text-red-300 mb-3">Protect your digital assets</p>
+                    <p className="text-sm text-red-200 mb-4">
+                      Wallet security is paramount in DeFi. Your wallet is your gateway to the decentralized world, and losing access or having it compromised can result in permanent loss of funds. Understanding proper wallet security practices is essential for safe DeFi participation.
+                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-red-300">Key Points:</p>
+                      <p className="text-sm text-red-200">• Never share your private keys or seed phrases</p>
+                      <p className="text-sm text-red-200">• Use hardware wallets for large amounts</p>
+                      <p className="text-sm text-red-200">• Keep software wallets updated</p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-red-900/30 rounded-lg">
+                    <h4 className="text-white font-semibold mb-2">Smart Contract Risks</h4>
+                    <p className="text-sm text-red-300 mb-3">Understanding and mitigating risks</p>
+                    <p className="text-sm text-red-200 mb-4">
+                      Smart contracts are self-executing contracts with terms directly written into code. While they eliminate the need for intermediaries, they also introduce unique risks including bugs, exploits, and governance risks. Understanding these risks is crucial for safe DeFi participation.
+                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-red-300">Key Points:</p>
+                      <p className="text-sm text-red-200">• Code is immutable and may contain bugs</p>
+                      <p className="text-sm text-red-200">• Audit reports don't guarantee complete safety</p>
+                      <p className="text-sm text-red-200">• Flash loan attacks and other exploit vectors</p>
+                    </div>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </CardContent>
+      </Card>
 
       {/* YouTube Learning Videos */}
       <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
