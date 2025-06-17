@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Play, Clock, Star, TrendingUp, Shield, Zap } from "lucide-react";
+import { BookOpen, Play, Clock, Star, TrendingUp, Shield, Zap, ExternalLink, Youtube } from "lucide-react";
 
 const EducationHub = () => {
   const courses = [
@@ -56,6 +56,134 @@ const EducationHub = () => {
     }
   ];
 
+  const youtubeVideos = [
+    {
+      title: "DeFi Explained in 10 Minutes",
+      channel: "Coin Bureau",
+      duration: "10:45",
+      url: "https://www.youtube.com/watch?v=k9HYC0EJU6E",
+      views: "2.1M"
+    },
+    {
+      title: "What is Yield Farming? Complete Guide",
+      channel: "Whiteboard Crypto",
+      duration: "15:32",
+      url: "https://www.youtube.com/watch?v=ClnnLI1SClA",
+      views: "850k"
+    },
+    {
+      title: "Liquidity Pools Explained",
+      channel: "Finematics",
+      duration: "12:18",
+      url: "https://www.youtube.com/watch?v=cizLhxSKrAc",
+      views: "1.3M"
+    },
+    {
+      title: "Smart Contract Security Best Practices",
+      channel: "Smart Contract Programmer",
+      duration: "18:45",
+      url: "https://www.youtube.com/watch?v=WGM2islUYuE",
+      views: "420k"
+    },
+    {
+      title: "How to Use MetaMask Wallet",
+      channel: "99Bitcoins",
+      duration: "8:22",
+      url: "https://www.youtube.com/watch?v=YVgfHZMFFFQ",
+      views: "1.8M"
+    },
+    {
+      title: "Arbitrage Trading in DeFi",
+      channel: "DeFi Dad",
+      duration: "22:15",
+      url: "https://www.youtube.com/watch?v=3HPP8zKZKrU",
+      views: "350k"
+    }
+  ];
+
+  const fundamentalsContent = [
+    {
+      title: "What is DeFi?",
+      description: "Understanding decentralized finance principles",
+      content: "Decentralized Finance (DeFi) is a blockchain-based form of finance that does not rely on central financial intermediaries such as brokerages, exchanges, or banks. Instead, it utilizes smart contracts on blockchains, the most common being Ethereum. DeFi platforms allow people to lend or borrow funds from others, speculate on price movements using derivatives, trade cryptocurrencies, insure against risks, and earn interest in savings-like accounts.",
+      keyPoints: [
+        "No central authority or intermediaries",
+        "Built on blockchain technology (primarily Ethereum)",
+        "Uses smart contracts for automated execution",
+        "Provides financial services without traditional banks",
+        "Offers lending, borrowing, trading, and earning opportunities"
+      ]
+    },
+    {
+      title: "Blockchain Basics",
+      description: "How blockchain technology enables DeFi",
+      content: "Blockchain is the foundational technology that makes DeFi possible. It's a distributed ledger that maintains a continuously growing list of records, called blocks, which are linked and secured using cryptography. Each block contains a cryptographic hash of the previous block, a timestamp, and transaction data.",
+      keyPoints: [
+        "Immutable and transparent transaction records",
+        "Decentralized network of nodes validates transactions",
+        "Smart contracts enable programmable money",
+        "No single point of failure",
+        "Permissionless access to financial services"
+      ]
+    }
+  ];
+
+  const strategiesContent = [
+    {
+      title: "Yield Farming",
+      description: "Maximize returns through liquidity provision",
+      content: "Yield farming involves lending cryptocurrency to earn rewards in the form of additional cryptocurrency. Users provide liquidity to DeFi protocols and earn fees, interest, or governance tokens as rewards. This strategy requires careful analysis of risks and returns across different protocols.",
+      keyPoints: [
+        "Provide liquidity to earn passive income",
+        "Compare APY rates across different protocols",
+        "Understand impermanent loss risks",
+        "Consider gas fees and transaction costs",
+        "Monitor protocol security and audit reports"
+      ]
+    },
+    {
+      title: "Arbitrage Trading",
+      description: "Profit from price differences across platforms",
+      content: "Arbitrage trading in DeFi involves exploiting price differences of the same asset across different decentralized exchanges (DEXs). Traders buy an asset on one platform where the price is lower and simultaneously sell it on another platform where the price is higher, profiting from the price difference.",
+      keyPoints: [
+        "Identify price discrepancies across DEXs",
+        "Execute trades quickly before price correction",
+        "Account for gas fees and slippage",
+        "Use flash loans for capital efficiency",
+        "Monitor multiple exchanges simultaneously"
+      ]
+    }
+  ];
+
+  const securityContent = [
+    {
+      title: "Wallet Security",
+      description: "Protect your digital assets",
+      content: "Wallet security is paramount in DeFi. Your wallet is your gateway to the decentralized world, and losing access or having it compromised can result in permanent loss of funds. Understanding proper wallet security practices is essential for safe DeFi participation.",
+      keyPoints: [
+        "Never share your private keys or seed phrases",
+        "Use hardware wallets for large amounts",
+        "Keep software wallets updated",
+        "Use strong, unique passwords",
+        "Enable two-factor authentication where available",
+        "Be wary of phishing attempts"
+      ]
+    },
+    {
+      title: "Smart Contract Risks",
+      description: "Understanding and mitigating risks",
+      content: "Smart contracts are self-executing contracts with terms directly written into code. While they eliminate the need for intermediaries, they also introduce unique risks including bugs, exploits, and governance risks. Understanding these risks is crucial for safe DeFi participation.",
+      keyPoints: [
+        "Code is immutable and may contain bugs",
+        "Audit reports don't guarantee complete safety",
+        "Flash loan attacks and other exploit vectors",
+        "Governance token risks and centralization",
+        "Always start with small amounts when testing",
+        "Research protocol teams and their track record"
+      ]
+    }
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -101,7 +229,7 @@ const EducationHub = () => {
         </CardContent>
       </Card>
 
-      {/* Course Categories */}
+      {/* Course Categories with Detailed Content */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
           <CardHeader>
@@ -114,19 +242,20 @@ const EducationHub = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="p-3 bg-blue-900/30 rounded-lg">
-                <h4 className="text-white font-medium">What is DeFi?</h4>
-                <p className="text-sm text-blue-300 mt-1">
-                  Understanding decentralized finance principles
-                </p>
-              </div>
-              <div className="p-3 bg-blue-900/30 rounded-lg">
-                <h4 className="text-white font-medium">Blockchain Basics</h4>
-                <p className="text-sm text-blue-300 mt-1">
-                  How blockchain technology enables DeFi
-                </p>
-              </div>
+            <div className="space-y-4">
+              {fundamentalsContent.map((item, index) => (
+                <div key={index} className="p-4 bg-blue-900/30 rounded-lg">
+                  <h4 className="text-white font-medium mb-2">{item.title}</h4>
+                  <p className="text-sm text-blue-300 mb-3">{item.description}</p>
+                  <p className="text-xs text-blue-200 mb-3">{item.content}</p>
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-blue-300">Key Points:</p>
+                    {item.keyPoints.slice(0, 3).map((point, idx) => (
+                      <p key={idx} className="text-xs text-blue-200">• {point}</p>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -142,19 +271,20 @@ const EducationHub = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="p-3 bg-green-900/30 rounded-lg">
-                <h4 className="text-white font-medium">Yield Farming</h4>
-                <p className="text-sm text-green-300 mt-1">
-                  Maximize returns through liquidity provision
-                </p>
-              </div>
-              <div className="p-3 bg-green-900/30 rounded-lg">
-                <h4 className="text-white font-medium">Arbitrage Trading</h4>
-                <p className="text-sm text-green-300 mt-1">
-                  Profit from price differences across platforms
-                </p>
-              </div>
+            <div className="space-y-4">
+              {strategiesContent.map((item, index) => (
+                <div key={index} className="p-4 bg-green-900/30 rounded-lg">
+                  <h4 className="text-white font-medium mb-2">{item.title}</h4>
+                  <p className="text-sm text-green-300 mb-3">{item.description}</p>
+                  <p className="text-xs text-green-200 mb-3">{item.content}</p>
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-green-300">Key Points:</p>
+                    {item.keyPoints.slice(0, 3).map((point, idx) => (
+                      <p key={idx} className="text-xs text-green-200">• {point}</p>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -170,23 +300,65 @@ const EducationHub = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="p-3 bg-red-900/30 rounded-lg">
-                <h4 className="text-white font-medium">Wallet Security</h4>
-                <p className="text-sm text-red-300 mt-1">
-                  Protect your digital assets
-                </p>
-              </div>
-              <div className="p-3 bg-red-900/30 rounded-lg">
-                <h4 className="text-white font-medium">Smart Contract Risks</h4>
-                <p className="text-sm text-red-300 mt-1">
-                  Understanding and mitigating risks
-                </p>
-              </div>
+            <div className="space-y-4">
+              {securityContent.map((item, index) => (
+                <div key={index} className="p-4 bg-red-900/30 rounded-lg">
+                  <h4 className="text-white font-medium mb-2">{item.title}</h4>
+                  <p className="text-sm text-red-300 mb-3">{item.description}</p>
+                  <p className="text-xs text-red-200 mb-3">{item.content}</p>
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-red-300">Key Points:</p>
+                    {item.keyPoints.slice(0, 3).map((point, idx) => (
+                      <p key={idx} className="text-xs text-red-200">• {point}</p>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* YouTube Learning Videos */}
+      <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Youtube className="w-5 h-5 text-red-500" />
+            DeFi Learning Videos
+          </CardTitle>
+          <CardDescription className="text-purple-300">
+            Curated YouTube videos to enhance your DeFi knowledge
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {youtubeVideos.map((video, index) => (
+              <div key={index} className="p-4 bg-slate-800/30 rounded-lg hover:bg-slate-700/30 transition-colors">
+                <div className="flex items-start justify-between mb-3">
+                  <h4 className="text-white font-medium text-sm leading-tight">{video.title}</h4>
+                  <ExternalLink className="w-4 h-4 text-purple-400 flex-shrink-0 ml-2" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-purple-300">{video.channel}</p>
+                  <div className="flex items-center justify-between text-xs text-purple-400">
+                    <span>{video.duration}</span>
+                    <span>{video.views} views</span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full text-xs bg-red-600/20 border-red-600/30 text-red-300 hover:bg-red-600/30"
+                    onClick={() => window.open(video.url, '_blank')}
+                  >
+                    <Youtube className="w-3 h-3 mr-1" />
+                    Watch on YouTube
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Course Grid */}
       <div>
