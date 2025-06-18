@@ -56,35 +56,35 @@ const Index = () => {
               </div>
 
               {/* Navigation Menu */}
-              <nav className="hidden lg:flex items-center space-x-6">
+              <nav className="hidden lg:flex items-center space-x-4">
                 {[
                   { id: 'aichat', label: 'AI Chat', icon: MessageSquare },
                   { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
                   { id: 'trading', label: 'Trading', icon: ArrowUpDown },
-                  { id: 'borrowing', label: 'Borrowing & Lending', icon: DollarSign },
-                  { id: 'simulate', label: 'Simulation Panel', icon: Zap },
+                  { id: 'borrowing', label: 'Lending', icon: DollarSign },
+                  { id: 'simulate', label: 'Simulation', icon: Zap },
                   { id: 'portfolio', label: 'Portfolio', icon: TrendingUp },
-                  { id: 'education', label: 'Education Hub', icon: BookOpen },
+                  { id: 'education', label: 'Education', icon: BookOpen },
                   { id: 'settings', label: 'Settings', icon: Settings },
                 ].map((item) => (
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap ${
                       activeTab === item.id
                         ? 'bg-purple-600/20 text-purple-300 border border-purple-600/30'
                         : 'text-gray-300 hover:text-white hover:bg-purple-800/20'
                     }`}
                   >
                     <item.icon className="w-4 h-4" />
-                    <span className="font-medium">{item.label}</span>
+                    <span className="font-medium text-sm">{item.label}</span>
                   </button>
                 ))}
               </nav>
             </div>
             
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon" className="text-purple-300 hover:text-white">
+              <Button variant="ghost" size="icon" className="text-purple-300 hover:text-white relative">
                 <Bell className="w-5 h-5" />
                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
                   <span className="text-xs text-white">2</span>
@@ -92,7 +92,7 @@ const Index = () => {
               </Button>
               <Badge variant="secondary" className="bg-green-500/20 text-green-400 hover:bg-green-500/30">
                 <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                Multi-Chain Active
+                Multi-Chain
               </Badge>
               <WalletConnector 
                 isConnected={isWalletConnected} 
@@ -109,7 +109,7 @@ const Index = () => {
                 { id: 'aichat', label: 'AI Chat', icon: MessageSquare },
                 { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
                 { id: 'trading', label: 'Trading', icon: ArrowUpDown },
-                { id: 'borrowing', label: 'Borrowing', icon: DollarSign },
+                { id: 'borrowing', label: 'Lending', icon: DollarSign },
                 { id: 'simulate', label: 'Simulate', icon: Zap },
                 { id: 'portfolio', label: 'Portfolio', icon: TrendingUp },
                 { id: 'education', label: 'Education', icon: BookOpen },
@@ -118,14 +118,14 @@ const Index = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 whitespace-nowrap ${
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-all duration-200 whitespace-nowrap text-xs ${
                     activeTab === tab.id
                       ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25'
                       : 'text-purple-300 hover:text-white hover:bg-purple-800/30'
                   }`}
                 >
                   <tab.icon className="w-4 h-4" />
-                  <span className="font-medium text-sm">{tab.label}</span>
+                  <span className="font-medium">{tab.label}</span>
                 </button>
               ))}
             </div>

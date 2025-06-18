@@ -92,6 +92,176 @@ export type Database = {
         }
         Relationships: []
       }
+      cross_chain_transactions: {
+        Row: {
+          amount: number
+          asset_id: string
+          bridge_fee: number | null
+          confirmed_at: string | null
+          created_at: string
+          from_chain_id: string | null
+          gas_fee: number | null
+          id: string
+          status: string
+          to_chain_id: string | null
+          transaction_hash: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          asset_id: string
+          bridge_fee?: number | null
+          confirmed_at?: string | null
+          created_at?: string
+          from_chain_id?: string | null
+          gas_fee?: number | null
+          id?: string
+          status?: string
+          to_chain_id?: string | null
+          transaction_hash?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          asset_id?: string
+          bridge_fee?: number | null
+          confirmed_at?: string | null
+          created_at?: string
+          from_chain_id?: string | null
+          gas_fee?: number | null
+          id?: string
+          status?: string
+          to_chain_id?: string | null
+          transaction_hash?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cross_chain_transactions_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "lending_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cross_chain_transactions_from_chain_id_fkey"
+            columns: ["from_chain_id"]
+            isOneToOne: false
+            referencedRelation: "supported_chains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cross_chain_transactions_to_chain_id_fkey"
+            columns: ["to_chain_id"]
+            isOneToOne: false
+            referencedRelation: "supported_chains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lending_assets: {
+        Row: {
+          borrowing_apy: number
+          chain_id: string
+          created_at: string
+          decimals: number
+          id: string
+          is_active: boolean
+          lending_apy: number
+          max_ltv: number
+          token_address: string
+          token_name: string
+          token_symbol: string
+        }
+        Insert: {
+          borrowing_apy?: number
+          chain_id: string
+          created_at?: string
+          decimals?: number
+          id?: string
+          is_active?: boolean
+          lending_apy?: number
+          max_ltv?: number
+          token_address: string
+          token_name: string
+          token_symbol: string
+        }
+        Update: {
+          borrowing_apy?: number
+          chain_id?: string
+          created_at?: string
+          decimals?: number
+          id?: string
+          is_active?: boolean
+          lending_apy?: number
+          max_ltv?: number
+          token_address?: string
+          token_name?: string
+          token_symbol?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lending_assets_chain_id_fkey"
+            columns: ["chain_id"]
+            isOneToOne: false
+            referencedRelation: "supported_chains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lending_positions: {
+        Row: {
+          accrued_interest: number
+          amount: number
+          apy_rate: number
+          asset_id: string
+          created_at: string
+          id: string
+          initial_amount: number
+          position_type: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accrued_interest?: number
+          amount?: number
+          apy_rate: number
+          asset_id: string
+          created_at?: string
+          id?: string
+          initial_amount?: number
+          position_type: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accrued_interest?: number
+          amount?: number
+          apy_rate?: number
+          asset_id?: string
+          created_at?: string
+          id?: string
+          initial_amount?: number
+          position_type?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lending_positions_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "lending_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modules: {
         Row: {
           content: string
@@ -182,6 +352,74 @@ export type Database = {
           window_start?: string
         }
         Relationships: []
+      }
+      supported_chains: {
+        Row: {
+          chain_id: number
+          chain_name: string
+          created_at: string
+          explorer_url: string
+          id: string
+          is_active: boolean
+          native_token: string
+          rpc_url: string
+        }
+        Insert: {
+          chain_id: number
+          chain_name: string
+          created_at?: string
+          explorer_url: string
+          id?: string
+          is_active?: boolean
+          native_token: string
+          rpc_url: string
+        }
+        Update: {
+          chain_id?: number
+          chain_name?: string
+          created_at?: string
+          explorer_url?: string
+          id?: string
+          is_active?: boolean
+          native_token?: string
+          rpc_url?: string
+        }
+        Relationships: []
+      }
+      user_portfolio: {
+        Row: {
+          asset_id: string
+          available_balance: number
+          id: string
+          last_updated: string
+          locked_balance: number
+          user_id: string
+        }
+        Insert: {
+          asset_id: string
+          available_balance?: number
+          id?: string
+          last_updated?: string
+          locked_balance?: number
+          user_id: string
+        }
+        Update: {
+          asset_id?: string
+          available_balance?: number
+          id?: string
+          last_updated?: string
+          locked_balance?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_portfolio_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "lending_assets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
