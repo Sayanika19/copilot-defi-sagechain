@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,7 +41,7 @@ const Index = () => {
       {/* Header */}
       <header className="border-b border-purple-800/30 bg-black/20 backdrop-blur-xl">
         <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center space-x-8">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
@@ -54,33 +55,6 @@ const Index = () => {
                   <h1 className="text-2xl font-bold text-white">SageChain</h1>
                 </div>
               </div>
-
-              {/* Navigation Menu */}
-              <nav className="hidden lg:flex items-center space-x-4">
-                {[
-                  { id: 'aichat', label: 'AI Chat', icon: MessageSquare },
-                  { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-                  { id: 'trading', label: 'Trading', icon: ArrowUpDown },
-                  { id: 'borrowing', label: 'Lending', icon: DollarSign },
-                  { id: 'simulate', label: 'Simulation', icon: Zap },
-                  { id: 'portfolio', label: 'Portfolio', icon: TrendingUp },
-                  { id: 'education', label: 'Education', icon: BookOpen },
-                  { id: 'settings', label: 'Settings', icon: Settings },
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap ${
-                      activeTab === item.id
-                        ? 'bg-purple-600/20 text-purple-300 border border-purple-600/30'
-                        : 'text-gray-300 hover:text-white hover:bg-purple-800/20'
-                    }`}
-                  >
-                    <item.icon className="w-4 h-4" />
-                    <span className="font-medium text-sm">{item.label}</span>
-                  </button>
-                ))}
-              </nav>
             </div>
             
             <div className="flex items-center space-x-4">
@@ -102,15 +76,15 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Mobile Navigation */}
-          <nav className="lg:hidden mt-4">
-            <div className="flex space-x-1 bg-black/20 backdrop-blur-xl rounded-lg p-1 overflow-x-auto">
+          {/* Navigation Menu - Always visible, stacked when needed */}
+          <nav className="mt-6">
+            <div className="flex flex-wrap gap-2 bg-black/20 backdrop-blur-xl rounded-lg p-2">
               {[
                 { id: 'aichat', label: 'AI Chat', icon: MessageSquare },
                 { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
                 { id: 'trading', label: 'Trading', icon: ArrowUpDown },
                 { id: 'borrowing', label: 'Lending', icon: DollarSign },
-                { id: 'simulate', label: 'Simulate', icon: Zap },
+                { id: 'simulate', label: 'Simulation', icon: Zap },
                 { id: 'portfolio', label: 'Portfolio', icon: TrendingUp },
                 { id: 'education', label: 'Education', icon: BookOpen },
                 { id: 'settings', label: 'Settings', icon: Settings },
@@ -118,7 +92,7 @@ const Index = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-all duration-200 whitespace-nowrap text-xs ${
+                  className={`flex items-center space-x-2 px-4 py-3 rounded-md transition-all duration-200 whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25'
                       : 'text-purple-300 hover:text-white hover:bg-purple-800/30'
