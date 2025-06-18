@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +16,7 @@ export interface WalletData {
   address: string;
   balance: string;
   walletType: string;
+  tokens?: { [symbol: string]: number }; // Added tokens property
 }
 
 declare global {
@@ -38,22 +38,8 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectedWalletType, setConnectedWalletType] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [walletTokens, setWalletTokens] = useState<{ [symbol: string]: number }>({});
   const { toast } = useToast();
-
-  const wallets = [
-    { 
-      name: 'MetaMask', 
-      icon: '🦊', 
-      description: 'Most popular Ethereum wallet',
-      installed: typeof window !== 'undefined' && window.ethereum?.isMetaMask 
-    },
-    { 
-      name: 'WalletConnect', 
-      icon: '🔗', 
-      description: 'Connect via QR code',
-      installed: true 
-    },
-  ];
 
   // Check if wallet is already connected
   useEffect(() => {
@@ -65,11 +51,13 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
             const address = accounts[0];
             setWalletAddress(address);
             const balance = await updateBalance(address);
+            const tokens = await fetchTokenBalances(address);
             setConnectedWalletType('MetaMask');
             onConnect({
               address,
               balance,
-              walletType: 'MetaMask'
+              walletType: 'MetaMask',
+              tokens
             });
           }
         } catch (error) {
@@ -92,10 +80,12 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
           const address = accounts[0];
           setWalletAddress(address);
           const balance = await updateBalance(address);
+          const tokens = await fetchTokenBalances(address);
           onConnect({
             address,
             balance,
-            walletType: connectedWalletType || 'MetaMask'
+            walletType: connectedWalletType || 'MetaMask',
+            tokens
           });
         }
       };
@@ -109,6 +99,20 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
       };
     }
   }, [connectedWalletType, onConnect]);
+
+  const fetchTokenBalances = async (address: string): Promise<{ [symbol: string]: number }> => {
+    // Mock token balances for demo - in real app, you'd fetch from blockchain
+    const mockTokens = {
+      ETH: parseFloat(walletBalance.replace(' ETH', '')) || 2.5479,
+      BTC: 0.05234,
+      USDC: 1250.00,
+      USDT: 800.50,
+      UNI: 45.23,
+      AAVE: 12.67
+    };
+    setWalletTokens(mockTokens);
+    return mockTokens;
+  };
 
   const updateBalance = async (address: string): Promise<string> => {
     try {
@@ -154,11 +158,13 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
         const address = accounts[0];
         setWalletAddress(address);
         const balance = await updateBalance(address);
+        const tokens = await fetchTokenBalances(address);
         setConnectedWalletType('MetaMask');
         onConnect({
           address,
           balance,
-          walletType: 'MetaMask'
+          walletType: 'MetaMask',
+          tokens
         });
         setIsOpen(false);
         
@@ -190,16 +196,27 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
       });
 
       // Simulate connection delay for WalletConnect
-      setTimeout(() => {
+      setTimeout(async () => {
         const mockAddress = '0x742d35Cc6B5C73Ff5cb78a3e7B9B6834567f8f3A';
         const mockBalance = '2.5479 ETH';
+        const mockTokens = {
+          ETH: 2.5479,
+          BTC: 0.08123,
+          USDC: 2150.00,
+          USDT: 1200.75,
+          UNI: 67.45,
+          AAVE: 18.92
+        };
+        
         setWalletAddress(mockAddress);
         setWalletBalance(mockBalance);
+        setWalletTokens(mockTokens);
         setConnectedWalletType('WalletConnect');
         onConnect({
           address: mockAddress,
           balance: mockBalance,
-          walletType: 'WalletConnect'
+          walletType: 'WalletConnect',
+          tokens: mockTokens
         });
         setIsOpen(false);
         setIsConnecting(false);
@@ -245,6 +262,7 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
     setWalletAddress('');
     setWalletBalance('');
     setConnectedWalletType('');
+    setWalletTokens({});
     setIsOpen(false);
     setShowDropdown(false);
     setSelectedWallet('');
