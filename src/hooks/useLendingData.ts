@@ -21,6 +21,10 @@ interface Asset {
   borrowing_apy: number;
   max_ltv: number;
   is_active: boolean;
+  supported_chains?: {
+    chain_name: string;
+    native_token: string;
+  };
 }
 
 interface LendingPosition {
@@ -33,6 +37,13 @@ interface LendingPosition {
   apy_rate: number;
   status: string;
   created_at: string;
+  lending_assets?: {
+    token_symbol: string;
+    token_name: string;
+    supported_chains: {
+      chain_name: string;
+    };
+  };
 }
 
 interface Transaction {
@@ -44,6 +55,15 @@ interface Transaction {
   amount: number;
   status: string;
   created_at: string;
+  lending_assets?: {
+    token_symbol: string;
+  };
+  from_chain?: {
+    chain_name: string;
+  };
+  to_chain?: {
+    chain_name: string;
+  };
 }
 
 export const useLendingData = () => {
@@ -113,7 +133,14 @@ export const useLendingData = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPositions(data || []);
+      
+      // Type cast the position_type to ensure TypeScript compatibility
+      const typedPositions = (data || []).map(position => ({
+        ...position,
+        position_type: position.position_type as 'lend' | 'borrow'
+      }));
+      
+      setPositions(typedPositions);
     } catch (error) {
       console.error('Error fetching positions:', error);
       toast({
