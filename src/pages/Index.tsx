@@ -114,7 +114,7 @@ const Index = () => {
             {/* Tab Content */}
             {activeTab === 'dashboard' && <Dashboard isConnected={isWalletConnected} walletData={walletData} />}
             {activeTab === 'portfolio' && <PortfolioOverview isConnected={isWalletConnected} walletData={walletData} />}
-            {activeTab === 'trading' && <CryptoTrading walletData={walletData} />}
+            {activeTab === 'trading' && <CryptoTrading />}
             {activeTab === 'borrowing' && <BorrowingLending />}
             {activeTab === 'simulate' && <SimulationPanel />}
             {activeTab === 'education' && <EducationHub />}

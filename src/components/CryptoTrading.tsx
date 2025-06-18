@@ -9,13 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { ArrowUpDown, TrendingUp, DollarSign, Wallet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { WalletData } from "@/components/WalletConnector";
 
-interface CryptoTradingProps {
-  walletData?: WalletData | null;
-}
-
-const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
+const CryptoTrading = () => {
   const [buyAmount, setBuyAmount] = useState('');
   const [sellAmount, setSellAmount] = useState('');
   const [swapFromAmount, setSwapFromAmount] = useState('');
@@ -34,26 +29,12 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
     { symbol: 'AAVE', name: 'Aave', price: '$95.30', change: '+4.1%' },
   ];
 
-  const getWalletBalance = (symbol: string): number => {
-    if (!walletData?.tokens) return 0;
-    return walletData.tokens[symbol] || 0;
-  };
-
   const handleBuy = () => {
     if (!buyAmount || !selectedBuyCrypto) {
       toast({
         title: "Missing Information",
         description: "Please enter amount and select cryptocurrency",
         variant: "destructive",
-      });
-      return;
-    }
-
-    if (!walletData) {
-      toast({
-        title: "Wallet Not Connected",
-        description: "Please connect your wallet to make purchases",
-        variant: "destruct ive",
       });
       return;
     }
@@ -71,27 +52,6 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
       toast({
         title: "Missing Information",
         description: "Please enter amount and select cryptocurrency",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!walletData) {
-      toast({
-        title: "Wallet Not Connected",
-        description: "Please connect your wallet to cash out",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const availableBalance = getWalletBalance(selectedSellCrypto);
-    const sellAmountNum = parseFloat(sellAmount);
-
-    if (sellAmountNum > availableBalance) {
-      toast({
-        title: "Insufficient Balance",
-        description: `You only have ${availableBalance.toFixed(6)} ${selectedSellCrypto} in your wallet`,
         variant: "destructive",
       });
       return;
@@ -115,27 +75,6 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
       return;
     }
 
-    if (!walletData) {
-      toast({
-        title: "Wallet Not Connected",
-        description: "Please connect your wallet to swap tokens",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const availableBalance = getWalletBalance(selectedSwapFrom);
-    const swapAmountNum = parseFloat(swapFromAmount);
-
-    if (swapAmountNum > availableBalance) {
-      toast({
-        title: "Insufficient Balance",
-        description: `You only have ${availableBalance.toFixed(6)} ${selectedSwapFrom} in your wallet`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     toast({
       title: "Swap Executed",
       description: `Swapping ${swapFromAmount} ${selectedSwapFrom} for ${selectedSwapTo}`,
@@ -147,17 +86,6 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
 
   return (
     <div className="space-y-6">
-      {!walletData && (
-        <Card className="bg-yellow-900/20 border-yellow-600/30 backdrop-blur-xl">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-yellow-400">
-              <Wallet className="w-5 h-5" />
-              <span>Connect your wallet to see your balances and trade with restrictions</span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
@@ -244,11 +172,6 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
                     placeholder="Enter amount"
                     className="bg-slate-800/50 border-purple-800/30 text-white"
                   />
-                  {selectedSellCrypto && walletData && (
-                    <p className="text-xs text-purple-400">
-                      Available: {getWalletBalance(selectedSellCrypto).toFixed(6)} {selectedSellCrypto}
-                    </p>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className="text-purple-300">Cryptocurrency</Label>
@@ -261,11 +184,7 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
                         <SelectItem key={crypto.symbol} value={crypto.symbol} className="text-white">
                           <div className="flex items-center justify-between w-full">
                             <span>{crypto.name} ({crypto.symbol})</span>
-                            {walletData && (
-                              <span className="text-purple-300 text-sm">
-                                {getWalletBalance(crypto.symbol).toFixed(4)}
-                              </span>
-                            )}
+                            <span className="text-purple-300 text-sm">{crypto.price}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -306,23 +225,11 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
                       <SelectContent className="bg-slate-800 border-purple-800/30">
                         {cryptos.map((crypto) => (
                           <SelectItem key={crypto.symbol} value={crypto.symbol} className="text-white">
-                            <div className="flex items-center justify-between w-full">
-                              <span>{crypto.name} ({crypto.symbol})</span>
-                              {walletData && (
-                                <span className="text-purple-300 text-sm">
-                                  {getWalletBalance(crypto.symbol).toFixed(4)}
-                                </span>
-                              )}
-                            </div>
+                            {crypto.name} ({crypto.symbol})
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    {selectedSwapFrom && walletData && (
-                      <p className="text-xs text-purple-400">
-                        Available: {getWalletBalance(selectedSwapFrom).toFixed(6)} {selectedSwapFrom}
-                      </p>
-                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -375,11 +282,6 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
           <CardTitle className="text-white">Market Overview</CardTitle>
           <CardDescription className="text-purple-300">
             Current cryptocurrency prices and 24h changes
-            {walletData && (
-              <span className="block mt-1 text-sm">
-                Your wallet balances are shown in the trading section above
-              </span>
-            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -390,11 +292,6 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
                   <div>
                     <h3 className="text-white font-medium">{crypto.symbol}</h3>
                     <p className="text-sm text-purple-300">{crypto.name}</p>
-                    {walletData && (
-                      <p className="text-xs text-purple-400 mt-1">
-                        Balance: {getWalletBalance(crypto.symbol).toFixed(4)}
-                      </p>
-                    )}
                   </div>
                   <Badge variant={crypto.change.startsWith('+') ? 'default' : 'destructive'} className="text-xs">
                     {crypto.change}
