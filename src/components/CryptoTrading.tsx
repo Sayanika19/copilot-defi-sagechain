@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { WalletData } from "@/components/WalletConnector";
 import { useWalletBalance } from "@/hooks/useWalletBalance";
 import { useCoinGeckoPrice } from "@/hooks/useCoinGeckoPrice";
-import { useParaSwap } from "@/hooks/useParaSwap";
+import { useOneInch } from "@/hooks/useOneInch";
 
 interface CryptoTradingProps {
   walletData?: WalletData | null;
@@ -31,22 +30,12 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
   // Use custom hooks for real-time data
   const { balances, isLoading: balanceLoading, refetch: refetchBalance } = useWalletBalance(walletData);
   const { prices, isLoading: priceLoading, refetch: refetchPrices } = useCoinGeckoPrice();
-  const { quote, isLoading: quoteLoading, getQuote, executeSwap } = useParaSwap();
-
-  // Token address mapping for ParaSwap
-  const tokenAddresses: { [key: string]: string } = {
-    'ETH': '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
-    'USDC': '0xA0b86a33E6417bC6E7bD8E8fF0b1B28b64E5C1C8',
-    'USDT': '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-    'UNI': '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984',
-    'AAVE': '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9',
-    'BTC': '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' // WBTC
-  };
+  const { quote, isLoading: quoteLoading, getQuote, executeSwap, getCashOutQuote, executeCashOut, tokenAddresses } = useOneInch();
 
   // Get quote when swap parameters change
   useEffect(() => {
     if (selectedSwapFrom && selectedSwapTo && swapFromAmount && tokenAddresses[selectedSwapFrom] && tokenAddresses[selectedSwapTo]) {
-      getQuote(tokenAddresses[selectedSwapFrom], tokenAddresses[selectedSwapTo], swapFromAmount);
+      getQuote(selectedSwapFrom, selectedSwapTo, swapFromAmount);
     }
   }, [selectedSwapFrom, selectedSwapTo, swapFromAmount]);
 
@@ -83,18 +72,20 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
     }
 
     try {
-      // In a real implementation, you would use ParaSwap to buy tokens with fiat
-      // For now, we'll simulate the purchase
+      // Use 1inch to buy tokens with ETH
+      await executeSwap('ETH', selectedBuyCrypto, buyAmount, walletData.address);
+      
       toast({
-        title: "Buy Order Placed",
-        description: `Buying $${buyAmount} worth of ${selectedBuyCrypto}`,
+        title: "Buy Order Executed",
+        description: `Successfully bought $${buyAmount} worth of ${selectedBuyCrypto}`,
       });
       setBuyAmount('');
       setSelectedBuyCrypto('');
+      refetchBalance();
     } catch (error) {
       toast({
         title: "Buy Failed",
-        description: "Failed to place buy order",
+        description: "Failed to execute buy order",
         variant: "destructive",
       });
     }
@@ -132,13 +123,16 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
     }
 
     try {
-      // In a real implementation, you would convert crypto to fiat via ParaSwap or similar
+      // Use 1inch to cash out to USDC
+      await executeCashOut(selectedSellCrypto, sellAmount, walletData.address);
+      
       toast({
-        title: "Cash Out Order Placed",
-        description: `Cashing out ${sellAmount} ${selectedSellCrypto}`,
+        title: "Cash Out Executed",
+        description: `Successfully cashed out ${sellAmount} ${selectedSellCrypto}`,
       });
       setSellAmount('');
       setSelectedSellCrypto('');
+      refetchBalance();
     } catch (error) {
       toast({
         title: "Cash Out Failed",
@@ -180,23 +174,17 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
     }
 
     try {
-      if (quote) {
-        // Execute the swap using ParaSwap
-        await executeSwap(walletData.address);
-        toast({
-          title: "Swap Executed",
-          description: `Swapping ${swapFromAmount} ${selectedSwapFrom} for ${quote.destAmount} ${selectedSwapTo}`,
-        });
-      } else {
-        toast({
-          title: "No Quote Available",
-          description: "Please wait for swap quote to load",
-          variant: "destructive",
-        });
-      }
+      // Execute the swap using 1inch
+      await executeSwap(selectedSwapFrom, selectedSwapTo, swapFromAmount, walletData.address);
+      
+      toast({
+        title: "Swap Executed",
+        description: `Successfully swapped ${swapFromAmount} ${selectedSwapFrom} for ${selectedSwapTo}`,
+      });
       setSwapFromAmount('');
       setSelectedSwapFrom('');
       setSelectedSwapTo('');
+      refetchBalance();
     } catch (error) {
       toast({
         title: "Swap Failed",
@@ -229,7 +217,7 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
             </Button>
           </div>
           <CardDescription className="text-purple-300">
-            Buy, sell, and swap cryptocurrencies with real-time rates via ParaSwap
+            Buy, sell, and swap cryptocurrencies with real-time rates via 1inch
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -357,7 +345,7 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
               </Button>
             </TabsContent>
 
-            {/* Swap Tab */}
+            {/* Swap Tab with 1inch Integration */}
             <TabsContent value="swap" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -374,9 +362,9 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
                         <SelectValue placeholder="Select crypto" />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-800 border-purple-800/30">
-                        {prices.filter(crypto => tokenAddresses[crypto.symbol]).map((crypto) => (
-                          <SelectItem key={crypto.symbol} value={crypto.symbol} className="text-white">
-                            {crypto.name} ({crypto.symbol})
+                        {Object.keys(tokenAddresses).map((symbol) => (
+                          <SelectItem key={symbol} value={symbol} className="text-white">
+                            {symbol}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -387,7 +375,7 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
                   <Label className="text-purple-300">To</Label>
                   <div className="space-y-2">
                     <div className="h-10 bg-slate-800/50 border border-purple-800/30 rounded-md flex items-center px-3 text-purple-300">
-                      {quote && !quoteLoading ? quote.destAmount : 'Amount'}
+                      {quote && !quoteLoading ? (parseFloat(quote.toTokenAmount) / 1e18).toFixed(6) : 'Amount'}
                       {quoteLoading && <RefreshCw className="w-4 h-4 ml-2 animate-spin" />}
                     </div>
                     <Select value={selectedSwapTo} onValueChange={setSelectedSwapTo}>
@@ -395,9 +383,9 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
                         <SelectValue placeholder="Select crypto" />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-800 border-purple-800/30">
-                        {prices.filter(crypto => crypto.symbol !== selectedSwapFrom && tokenAddresses[crypto.symbol]).map((crypto) => (
-                          <SelectItem key={crypto.symbol} value={crypto.symbol} className="text-white">
-                            {crypto.name} ({crypto.symbol})
+                        {Object.keys(tokenAddresses).filter(symbol => symbol !== selectedSwapFrom).map((symbol) => (
+                          <SelectItem key={symbol} value={symbol} className="text-white">
+                            {symbol}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -422,20 +410,20 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-purple-300">Exchange Rate:</span>
-                      <span className="text-white">1 {selectedSwapFrom} = {(parseFloat(quote.destAmount) / parseFloat(quote.srcAmount)).toFixed(6)} {selectedSwapTo}</span>
+                      <span className="text-white">1 {selectedSwapFrom} = {((parseFloat(quote.toTokenAmount) / 1e18) / (parseFloat(quote.fromTokenAmount) / 1e18)).toFixed(6)} {selectedSwapTo}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-purple-300">Estimated Gas:</span>
-                      <span className="text-white">{quote.gasCost} ETH (${quote.gasCostUSD})</span>
+                      <span className="text-white">{quote.estimatedGas} gas units</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-purple-300">Powered by:</span>
-                      <span className="text-white">ParaSwap</span>
+                      <span className="text-white">1inch</span>
                     </div>
                   </div>
                 </div>
               )}
-              <Button onClick={handleSwap} className="w-full bg-purple-600 hover:bg-purple-700" disabled={quoteLoading}>
+              <Button onClick={handleSwap} className="w-full bg-purple-600 hover:bg-purple-700" disabled={quoteLoading || !walletData}>
                 <ArrowUpDown className="w-4 h-4 mr-2" />
                 {quoteLoading ? 'Getting Quote...' : 'Swap Tokens'}
               </Button>
