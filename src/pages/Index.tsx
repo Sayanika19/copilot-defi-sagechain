@@ -110,59 +110,55 @@ const Index = () => {
       </header>
 
       <div className="container mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-          {/* Main Content */}
-          <div className={activeTab === 'aichat' ? 'xl:col-span-3' : 'xl:col-span-4'}>
-            {/* Tab Content */}
-            {activeTab === 'dashboard' && <Dashboard isConnected={isWalletConnected} walletData={walletData} />}
-            {activeTab === 'portfolio' && <PortfolioOverview isConnected={isWalletConnected} walletData={walletData} />}
-            {activeTab === 'trading' && <CryptoTrading walletData={walletData} />}
-            {activeTab === 'borrowing' && <BorrowingLending />}
-            {activeTab === 'simulate' && <SimulationPanel />}
-            {activeTab === 'education' && <EducationHub />}
-            {activeTab === 'settings' && <SettingsPanel />}
-            {activeTab === 'aichat' && (
-              <div className="space-y-6">
-                <div className="flex items-center space-x-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setActiveTab('dashboard')}
-                    className="text-purple-300 hover:text-white"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Home
-                  </Button>
-                </div>
-                <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <MessageSquare className="w-5 h-5 text-purple-400" />
-                      AI Chat Assistant
-                    </CardTitle>
-                    <CardDescription className="text-purple-300">
-                      Get personalized DeFi insights and trading recommendations
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              </div>
-            )}
+        {/* Full Width AI Chat Mode */}
+        {activeTab === 'aichat' ? (
+          <div className="space-y-6">
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setActiveTab('dashboard')}
+                className="text-purple-300 hover:text-white"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Home
+              </Button>
+            </div>
+            <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-purple-400" />
+                  AI Chat Assistant - Full Mode
+                </CardTitle>
+                <CardDescription className="text-purple-300">
+                  Full-screen AI assistant for detailed DeFi insights and trading recommendations
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AIChat />
+              </CardContent>
+            </Card>
           </div>
+        ) : (
+          /* Regular Layout with Sidebar */
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+            {/* Main Content */}
+            <div className="xl:col-span-3">
+              {activeTab === 'dashboard' && <Dashboard isConnected={isWalletConnected} walletData={walletData} />}
+              {activeTab === 'portfolio' && <PortfolioOverview isConnected={isWalletConnected} walletData={walletData} />}
+              {activeTab === 'trading' && <CryptoTrading walletData={walletData} />}
+              {activeTab === 'borrowing' && <BorrowingLending />}
+              {activeTab === 'simulate' && <SimulationPanel />}
+              {activeTab === 'education' && <EducationHub />}
+              {activeTab === 'settings' && <SettingsPanel />}
+            </div>
 
-          {/* AI Chat Sidebar - only show when not in full AI Chat mode */}
-          {activeTab !== 'aichat' && (
+            {/* AI Chat Sidebar */}
             <div className="xl:col-span-1">
               <AIChat />
             </div>
-          )}
-
-          {/* Full AI Chat when in AI Chat mode */}
-          {activeTab === 'aichat' && (
-            <div className="xl:col-span-1">
-              <AIChat />
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

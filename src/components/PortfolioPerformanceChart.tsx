@@ -31,12 +31,9 @@ const PortfolioPerformanceChart = ({ walletData, isConnected }: PortfolioPerform
       { date: '2025-06-14', displayDate: '6/14' },
     ];
 
+    // Return empty data when not connected
     if (!isConnected || !walletData?.balance) {
-      // Return static demo data when not connected
-      return baseData.map((item, index) => ({
-        ...item,
-        value: 10000 + (index * 150) + Math.random() * 500 - 250
-      }));
+      return [];
     }
 
     // Calculate current portfolio value based on real wallet balance
@@ -44,19 +41,18 @@ const PortfolioPerformanceChart = ({ walletData, isConnected }: PortfolioPerform
     const ethPrice = 2000; // Current ETH price
     const currentValue = ethAmount * ethPrice;
     
-    // Generate historical data based on actual current value
+    // For empty wallets, return empty data
+    if (currentValue === 0) {
+      return [];
+    }
+    
+    // For wallets with value, show realistic historical progression
     return baseData.map((item, index) => {
       const isToday = index === baseData.length - 1;
       if (isToday) {
         return { ...item, value: Math.round(currentValue) };
       }
       
-      // For empty wallets, show flat zero line
-      if (currentValue === 0) {
-        return { ...item, value: 0 };
-      }
-      
-      // For wallets with value, show realistic historical progression
       const daysSinceStart = index;
       const totalDays = baseData.length - 1;
       const progressRatio = daysSinceStart / totalDays;
@@ -85,41 +81,56 @@ const PortfolioPerformanceChart = ({ walletData, isConnected }: PortfolioPerform
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[300px] w-full">
-          <AreaChart data={portfolioData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
-            <defs>
-              <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(260, 100%, 80%)" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="hsl(260, 100%, 80%)" stopOpacity={0.1}/>
-              </linearGradient>
-            </defs>
-            <XAxis 
-              dataKey="displayDate" 
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#9CA3AF', fontSize: 12 }}
-              interval="preserveStartEnd"
-            />
-            <YAxis 
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#9CA3AF', fontSize: 12 }}
-              domain={['dataMin - 100', 'dataMax + 100']}
-            />
-            <ChartTooltip 
-              content={<ChartTooltipContent />}
-              labelFormatter={(value) => `Date: ${value}`}
-              formatter={(value) => [`$${value.toLocaleString()}`, 'Portfolio Value']}
-            />
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke="hsl(260, 100%, 80%)"
-              strokeWidth={2}
-              fill="url(#colorValue)"
-            />
-          </AreaChart>
-        </ChartContainer>
+        <div className="h-[300px] w-full">
+          {portfolioData.length > 0 ? (
+            <ChartContainer config={chartConfig} className="h-full w-full">
+              <AreaChart data={portfolioData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                <defs>
+                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(260, 100%, 80%)" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="hsl(260, 100%, 80%)" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <XAxis 
+                  dataKey="displayDate" 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                  interval="preserveStartEnd"
+                />
+                <YAxis 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                  domain={['dataMin - 100', 'dataMax + 100']}
+                />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  labelFormatter={(value) => `Date: ${value}`}
+                  formatter={(value) => [`$${value.toLocaleString()}`, 'Portfolio Value']}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="hsl(260, 100%, 80%)"
+                  strokeWidth={2}
+                  fill="url(#colorValue)"
+                />
+              </AreaChart>
+            </ChartContainer>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-purple-300">
+              <div className="text-6xl mb-4">📊</div>
+              <div className="text-lg font-medium">No Portfolio Data</div>
+              <div className="text-sm text-center mt-2">
+                {!isConnected 
+                  ? 'Connect your wallet to view real-time portfolio performance'
+                  : 'Your wallet appears to be empty. Add some crypto to see your portfolio chart!'
+                }
+              </div>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
