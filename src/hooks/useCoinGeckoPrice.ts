@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { coingeckoApi } from '@/services/coingeckoApi';
 
 interface CoinPrice {
   id: string;
@@ -7,6 +8,9 @@ interface CoinPrice {
   name: string;
   current_price: number;
   price_change_percentage_24h: number;
+  market_cap: number;
+  volume_24h: number;
+  image?: string;
 }
 
 export const useCoinGeckoPrice = () => {
@@ -19,73 +23,33 @@ export const useCoinGeckoPrice = () => {
     setError(null);
     
     try {
-      const response = await fetch(
-        'https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,usd-coin,tether,uniswap,aave&vs_currencies=usd&include_24hr_change=true'
-      );
+      // Get top cryptocurrencies by market cap
+      const marketData = await coingeckoApi.getCoinsMarkets('usd', 'market_cap_desc', 20);
       
-      if (response.ok) {
-        const data = await response.json();
-        
-        const formattedPrices: CoinPrice[] = [
-          {
-            id: 'ethereum',
-            symbol: 'ETH',
-            name: 'Ethereum',
-            current_price: data.ethereum?.usd || 2340.50,
-            price_change_percentage_24h: data.ethereum?.usd_24h_change || 2.4
-          },
-          {
-            id: 'bitcoin',
-            symbol: 'BTC',
-            name: 'Bitcoin',
-            current_price: data.bitcoin?.usd || 43250.00,
-            price_change_percentage_24h: data.bitcoin?.usd_24h_change || 1.8
-          },
-          {
-            id: 'usd-coin',
-            symbol: 'USDC',
-            name: 'USD Coin',
-            current_price: data['usd-coin']?.usd || 1.00,
-            price_change_percentage_24h: data['usd-coin']?.usd_24h_change || 0.0
-          },
-          {
-            id: 'tether',
-            symbol: 'USDT',
-            name: 'Tether',
-            current_price: data.tether?.usd || 1.00,
-            price_change_percentage_24h: data.tether?.usd_24h_change || 0.0
-          },
-          {
-            id: 'uniswap',
-            symbol: 'UNI',
-            name: 'Uniswap',
-            current_price: data.uniswap?.usd || 8.45,
-            price_change_percentage_24h: data.uniswap?.usd_24h_change || 3.2
-          },
-          {
-            id: 'aave',
-            symbol: 'AAVE',
-            name: 'Aave',
-            current_price: data.aave?.usd || 95.30,
-            price_change_percentage_24h: data.aave?.usd_24h_change || 4.1
-          }
-        ];
-        
-        setPrices(formattedPrices);
-      } else {
-        throw new Error('Failed to fetch prices');
-      }
+      const formattedPrices: CoinPrice[] = marketData.map(coin => ({
+        id: coin.id,
+        symbol: coin.symbol.toUpperCase(),
+        name: coin.name,
+        current_price: coin.current_price,
+        price_change_percentage_24h: coin.price_change_percentage_24h,
+        market_cap: coin.market_cap,
+        volume_24h: coin.total_volume,
+        image: coin.image
+      }));
+      
+      setPrices(formattedPrices);
     } catch (err) {
       console.error('Error fetching CoinGecko prices:', err);
       setError('Failed to fetch live prices');
+      
       // Fallback to mock data
       setPrices([
-        { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', current_price: 2340.50, price_change_percentage_24h: 2.4 },
-        { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', current_price: 43250.00, price_change_percentage_24h: 1.8 },
-        { id: 'usd-coin', symbol: 'USDC', name: 'USD Coin', current_price: 1.00, price_change_percentage_24h: 0.0 },
-        { id: 'tether', symbol: 'USDT', name: 'Tether', current_price: 1.00, price_change_percentage_24h: 0.0 },
-        { id: 'uniswap', symbol: 'UNI', name: 'Uniswap', current_price: 8.45, price_change_percentage_24h: 3.2 },
-        { id: 'aave', symbol: 'AAVE', name: 'Aave', current_price: 95.30, price_change_percentage_24h: 4.1 }
+        { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', current_price: 2500.68, price_change_percentage_24h: 0.04, market_cap: 300000000000, volume_24h: 15000000000 },
+        { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', current_price: 104353, price_change_percentage_24h: -0.05, market_cap: 2000000000000, volume_24h: 25000000000 },
+        { id: 'usd-coin', symbol: 'USDC', name: 'USD Coin', current_price: 0.999794, price_change_percentage_24h: -0.001, market_cap: 35000000000, volume_24h: 5000000000 },
+        { id: 'tether', symbol: 'USDT', name: 'Tether', current_price: 1.0, price_change_percentage_24h: -0.003, market_cap: 140000000000, volume_24h: 45000000000 },
+        { id: 'uniswap', symbol: 'UNI', name: 'Uniswap', current_price: 7.58, price_change_percentage_24h: 1.78, market_cap: 7500000000, volume_24h: 150000000 },
+        { id: 'aave', symbol: 'AAVE', name: 'Aave', current_price: 251.48, price_change_percentage_24h: -2.53, market_cap: 3750000000, volume_24h: 125000000 }
       ]);
     } finally {
       setIsLoading(false);
