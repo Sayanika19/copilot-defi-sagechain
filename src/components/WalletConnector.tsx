@@ -149,18 +149,14 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
     if (typeof window === 'undefined' || !window.ethereum) {
       toast({
         title: "MetaMask not found",
-        description: "Please install MetaMask extension from metamask.io",
+        description: "Please install MetaMask extension to continue.",
         variant: "destructive",
       });
-      // Open MetaMask installation page
-      window.open('https://metamask.io/download/', '_blank');
       return;
     }
 
     try {
       setIsConnecting(true);
-      
-      // Request account access
       const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts'
       });
@@ -170,33 +166,6 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
         setWalletAddress(address);
         const balance = await updateBalance(address);
         setConnectedWalletType('MetaMask');
-        
-        // Switch to Ethereum mainnet if not already
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x1' }], // Ethereum mainnet
-          });
-        } catch (switchError: any) {
-          if (switchError.code === 4902) {
-            // Chain not added to MetaMask
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [{
-                chainId: '0x1',
-                chainName: 'Ethereum Mainnet',
-                nativeCurrency: {
-                  name: 'Ether',
-                  symbol: 'ETH',
-                  decimals: 18,
-                },
-                rpcUrls: ['https://mainnet.infura.io/v3/'],
-                blockExplorerUrls: ['https://etherscan.io/'],
-              }],
-            });
-          }
-        }
-        
         onConnect({
           address,
           balance,
@@ -296,7 +265,7 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
     setSelectedWallet('');
     setIsConnecting(false);
     
-    // Call the parent's disconnect handler
+    // Call the parent's disconnect handler - this is the key fix
     if (onDisconnect) {
       onDisconnect();
     }
@@ -326,7 +295,7 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
         </Button>
         
         {showDropdown && (
-          <div className="absolute top-full right-0 mt-2 w-64 bg-slate-900 border border-purple-800/30 rounded-lg shadow-xl z-[9999] backdrop-blur-xl">
+          <div className="absolute top-full right-0 mt-2 w-64 bg-slate-900 border border-purple-800/30 rounded-lg shadow-xl z-50 backdrop-blur-xl">
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-2">
@@ -361,7 +330,7 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
                       Details
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="bg-slate-900 border-purple-800/30 z-[10000]">
+                  <DialogContent className="bg-slate-900 border-purple-800/30">
                     <DialogHeader>
                       <DialogTitle className="text-white">Wallet Details</DialogTitle>
                       <DialogDescription className="text-purple-300">
@@ -448,7 +417,7 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
           Connect Wallet
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-slate-900 border-purple-800/30 max-w-md z-[10000]">
+      <DialogContent className="bg-slate-900 border-purple-800/30 max-w-md">
         <DialogHeader>
           <DialogTitle className="text-white">Connect Your Wallet</DialogTitle>
           <DialogDescription className="text-purple-300">
