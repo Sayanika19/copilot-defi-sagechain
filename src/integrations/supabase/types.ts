@@ -386,6 +386,39 @@ export type Database = {
         }
         Relationships: []
       }
+      transactions: {
+        Row: {
+          amount: string | null
+          created_at: string | null
+          id: number
+          token_from: string | null
+          token_to: string | null
+          tx_hash: string | null
+          type: string | null
+          wallet: string | null
+        }
+        Insert: {
+          amount?: string | null
+          created_at?: string | null
+          id?: number
+          token_from?: string | null
+          token_to?: string | null
+          tx_hash?: string | null
+          type?: string | null
+          wallet?: string | null
+        }
+        Update: {
+          amount?: string | null
+          created_at?: string | null
+          id?: number
+          token_from?: string | null
+          token_to?: string | null
+          tx_hash?: string | null
+          type?: string | null
+          wallet?: string | null
+        }
+        Relationships: []
+      }
       user_portfolio: {
         Row: {
           asset_id: string

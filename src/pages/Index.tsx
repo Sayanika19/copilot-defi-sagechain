@@ -26,7 +26,7 @@ const Index = () => {
   };
 
   const handleWalletDisconnect = () => {
-    console.log('Wallet disconnected');
+    console.log('Wallet disconnected in Index');
     setIsWalletConnected(false);
     setWalletData(null);
   };

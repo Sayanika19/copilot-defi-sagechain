@@ -266,7 +266,7 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
     setSelectedWallet('');
     setIsConnecting(false);
     
-    // Call the parent's disconnect handler
+    // Call the parent's disconnect handler - this is the key fix
     if (onDisconnect) {
       onDisconnect();
     }
