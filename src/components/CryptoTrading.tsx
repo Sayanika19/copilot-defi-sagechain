@@ -9,8 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { ArrowUpDown, TrendingUp, DollarSign, Wallet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { WalletData } from "@/components/WalletConnector";
 
-const CryptoTrading = () => {
+interface CryptoTradingProps {
+  walletData?: WalletData | null;
+}
+
+const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
   const [buyAmount, setBuyAmount] = useState('');
   const [sellAmount, setSellAmount] = useState('');
   const [swapFromAmount, setSwapFromAmount] = useState('');
@@ -29,11 +34,25 @@ const CryptoTrading = () => {
     { symbol: 'AAVE', name: 'Aave', price: '$95.30', change: '+4.1%' },
   ];
 
+  const getWalletBalance = (symbol: string): number => {
+    if (!walletData?.tokens) return 0;
+    return walletData.tokens[symbol] || 0;
+  };
+
   const handleBuy = () => {
     if (!buyAmount || !selectedBuyCrypto) {
       toast({
         title: "Missing Information",
         description: "Please enter amount and select cryptocurrency",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!walletData) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet to make purchases",
         variant: "destructive",
       });
       return;
@@ -57,9 +76,30 @@ const CryptoTrading = () => {
       return;
     }
 
+    if (!walletData) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet to cash out",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const availableBalance = getWalletBalance(selectedSellCrypto);
+    const sellAmountNum = parseFloat(sellAmount);
+
+    if (sellAmountNum > availableBalance) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You only have ${availableBalance} ${selectedSellCrypto} available. Cannot cash out ${sellAmount} ${selectedSellCrypto}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
-      title: "Sell Order Placed",
-      description: `Selling ${sellAmount} ${selectedSellCrypto}`,
+      title: "Cash Out Order Placed",
+      description: `Cashing out ${sellAmount} ${selectedSellCrypto}`,
     });
     setSellAmount('');
     setSelectedSellCrypto('');
@@ -70,6 +110,27 @@ const CryptoTrading = () => {
       toast({
         title: "Missing Information",
         description: "Please fill in all swap details",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!walletData) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet to swap tokens",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const availableBalance = getWalletBalance(selectedSwapFrom);
+    const swapAmountNum = parseFloat(swapFromAmount);
+
+    if (swapAmountNum > availableBalance) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You only have ${availableBalance} ${selectedSwapFrom} available. Cannot swap ${swapFromAmount} ${selectedSwapFrom}.`,
         variant: "destructive",
       });
       return;
@@ -192,6 +253,18 @@ const CryptoTrading = () => {
                   </Select>
                 </div>
               </div>
+              
+              {selectedSellCrypto && walletData && (
+                <div className="p-3 bg-slate-800/30 rounded-lg border border-purple-800/20">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-purple-300">Available Balance:</span>
+                    <span className="text-white font-medium">
+                      {getWalletBalance(selectedSellCrypto)} {selectedSellCrypto}
+                    </span>
+                  </div>
+                </div>
+              )}
+              
               {selectedSellCrypto && sellAmount && (
                 <div className="p-4 bg-purple-900/20 rounded-lg border border-purple-800/30">
                   <p className="text-sm text-purple-300">
@@ -255,6 +328,18 @@ const CryptoTrading = () => {
                   </div>
                 </div>
               </div>
+              
+              {selectedSwapFrom && walletData && (
+                <div className="p-3 bg-slate-800/30 rounded-lg border border-purple-800/20">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-purple-300">Available Balance:</span>
+                    <span className="text-white font-medium">
+                      {getWalletBalance(selectedSwapFrom)} {selectedSwapFrom}
+                    </span>
+                  </div>
+                </div>
+              )}
+              
               {selectedSwapFrom && selectedSwapTo && swapFromAmount && (
                 <div className="p-4 bg-purple-900/20 rounded-lg border border-purple-800/30">
                   <div className="flex justify-between text-sm">
@@ -275,6 +360,30 @@ const CryptoTrading = () => {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Wallet Balance Display */}
+      {walletData && (
+        <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
+          <CardHeader>
+            <CardTitle className="text-white">Your Wallet Balance</CardTitle>
+            <CardDescription className="text-purple-300">
+              Available tokens for trading
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {Object.entries(walletData.tokens || {}).map(([symbol, balance]) => (
+                <div key={symbol} className="p-3 bg-slate-800/30 rounded-lg border border-purple-800/20">
+                  <div className="text-center">
+                    <h3 className="text-white font-medium">{symbol}</h3>
+                    <p className="text-purple-300 text-sm">{balance}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Market Overview */}
       <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">

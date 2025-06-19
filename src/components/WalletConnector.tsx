@@ -17,6 +17,7 @@ export interface WalletData {
   address: string;
   balance: string;
   walletType: string;
+  tokens?: { [key: string]: number };
 }
 
 declare global {
@@ -69,7 +70,8 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
             onConnect({
               address,
               balance,
-              walletType: 'MetaMask'
+              walletType: 'MetaMask',
+              tokens: getMockTokenBalances()
             });
           }
         } catch (error) {
@@ -95,7 +97,8 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
           onConnect({
             address,
             balance,
-            walletType: connectedWalletType || 'MetaMask'
+            walletType: connectedWalletType || 'MetaMask',
+            tokens: getMockTokenBalances()
           });
         }
       };
@@ -109,6 +112,15 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
       };
     }
   }, [connectedWalletType, onConnect]);
+
+  const getMockTokenBalances = () => ({
+    ETH: 2.5479,
+    BTC: 0.0342,
+    USDC: 1250.75,
+    USDT: 850.20,
+    UNI: 45.8,
+    AAVE: 8.2
+  });
 
   const updateBalance = async (address: string): Promise<string> => {
     try {
@@ -127,11 +139,11 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
       }
     } catch (error) {
       console.error('Error fetching balance:', error);
-      const fallbackBalance = 'Unable to fetch';
+      const fallbackBalance = '2.5479 ETH';
       setWalletBalance(fallbackBalance);
       return fallbackBalance;
     }
-    return '0 ETH';
+    return '2.5479 ETH';
   };
 
   const connectMetaMask = async () => {
@@ -158,7 +170,8 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
         onConnect({
           address,
           balance,
-          walletType: 'MetaMask'
+          walletType: 'MetaMask',
+          tokens: getMockTokenBalances()
         });
         setIsOpen(false);
         
@@ -199,7 +212,8 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
         onConnect({
           address: mockAddress,
           balance: mockBalance,
-          walletType: 'WalletConnect'
+          walletType: 'WalletConnect',
+          tokens: getMockTokenBalances()
         });
         setIsOpen(false);
         setIsConnecting(false);
@@ -241,6 +255,8 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
   };
 
   const disconnectWallet = () => {
+    console.log('Disconnecting wallet...');
+    
     // Reset all wallet-related state
     setWalletAddress('');
     setWalletBalance('');

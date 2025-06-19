@@ -41,7 +41,7 @@ const Index = () => {
       {/* Header */}
       <header className="border-b border-purple-800/30 bg-black/20 backdrop-blur-xl">
         <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
@@ -76,32 +76,34 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Navigation Menu - Always visible, stacked when needed */}
+          {/* Navigation Menu */}
           <nav className="mt-6">
-            <div className="flex flex-wrap gap-2 bg-black/20 backdrop-blur-xl rounded-lg p-2">
-              {[
-                { id: 'aichat', label: 'AI Chat', icon: MessageSquare },
-                { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-                { id: 'trading', label: 'Trading', icon: ArrowUpDown },
-                { id: 'borrowing', label: 'Lending', icon: DollarSign },
-                { id: 'simulate', label: 'Simulation', icon: Zap },
-                { id: 'portfolio', label: 'Portfolio', icon: TrendingUp },
-                { id: 'education', label: 'Education', icon: BookOpen },
-                { id: 'settings', label: 'Settings', icon: Settings },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 px-4 py-3 rounded-md transition-all duration-200 whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25'
-                      : 'text-purple-300 hover:text-white hover:bg-purple-800/30'
-                  }`}
-                >
-                  <tab.icon className="w-4 h-4" />
-                  <span className="font-medium">{tab.label}</span>
-                </button>
-              ))}
+            <div className="bg-black/20 backdrop-blur-xl rounded-lg p-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:flex-wrap gap-2">
+                {[
+                  { id: 'aichat', label: 'AI Chat', icon: MessageSquare },
+                  { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+                  { id: 'trading', label: 'Trading', icon: ArrowUpDown },
+                  { id: 'borrowing', label: 'Lending', icon: DollarSign },
+                  { id: 'simulate', label: 'Simulation', icon: Zap },
+                  { id: 'portfolio', label: 'Portfolio', icon: TrendingUp },
+                  { id: 'education', label: 'Education', icon: BookOpen },
+                  { id: 'settings', label: 'Settings', icon: Settings },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center justify-center space-x-2 px-3 py-3 rounded-md transition-all duration-200 whitespace-nowrap ${
+                      activeTab === tab.id
+                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25'
+                        : 'text-purple-300 hover:text-white hover:bg-purple-800/30'
+                    }`}
+                  >
+                    <tab.icon className="w-4 h-4" />
+                    <span className="font-medium text-sm">{tab.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </nav>
         </div>
@@ -114,7 +116,7 @@ const Index = () => {
             {/* Tab Content */}
             {activeTab === 'dashboard' && <Dashboard isConnected={isWalletConnected} walletData={walletData} />}
             {activeTab === 'portfolio' && <PortfolioOverview isConnected={isWalletConnected} walletData={walletData} />}
-            {activeTab === 'trading' && <CryptoTrading />}
+            {activeTab === 'trading' && <CryptoTrading walletData={walletData} />}
             {activeTab === 'borrowing' && <BorrowingLending />}
             {activeTab === 'simulate' && <SimulationPanel />}
             {activeTab === 'education' && <EducationHub />}
