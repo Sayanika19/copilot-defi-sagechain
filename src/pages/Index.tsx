@@ -135,7 +135,7 @@ const Index = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <AIChat />
+                <AIChat walletData={walletData} />
               </CardContent>
             </Card>
           </div>
@@ -155,7 +155,7 @@ const Index = () => {
 
             {/* AI Chat Sidebar */}
             <div className="xl:col-span-1">
-              <AIChat />
+              <AIChat walletData={walletData} />
             </div>
           </div>
         )}

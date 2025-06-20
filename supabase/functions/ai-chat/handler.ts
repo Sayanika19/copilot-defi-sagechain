@@ -11,7 +11,11 @@ export const handleChatRequest = async (req: Request): Promise<Response> => {
     const body = await req.json();
     console.log('Request data:', body);
     
-    const { message, intent } = validateRequest(body);
+    const { message, intent, walletData } = body;
+
+    if (!message || typeof message !== 'string') {
+      return createErrorResponse('Message is required and must be a string', 400);
+    }
 
     // Get Gemini API key
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
@@ -20,9 +24,28 @@ export const handleChatRequest = async (req: Request): Promise<Response> => {
       return createErrorResponse('AI service is temporarily unavailable');
     }
 
+    // Create context-aware prompt with wallet data
+    let contextualMessage = message;
+    if (walletData && intent === 'check_balance') {
+      const walletInfo = `
+User's Connected Wallet Information:
+- Address: ${walletData.address}
+- Balance: ${walletData.balance}
+- Wallet Type: ${walletData.walletType}
+${walletData.tokens ? `- Token Holdings: ${JSON.stringify(walletData.tokens, null, 2)}` : ''}
+
+User Question: ${message}
+
+Please provide a detailed analysis of their portfolio based on the actual wallet data above. Include specific balance information, token breakdown, and relevant insights.`;
+      
+      contextualMessage = walletInfo;
+    } else if (walletData) {
+      contextualMessage = `User has connected wallet: ${walletData.address} with balance: ${walletData.balance}. User question: ${message}`;
+    }
+
     // Generate streaming AI response
     const geminiService = new GeminiService(geminiApiKey);
-    const stream = await geminiService.generateStreamingResponse(message, intent);
+    const stream = await geminiService.generateStreamingResponse(contextualMessage, intent);
 
     console.log('Gemini streaming response initiated');
 

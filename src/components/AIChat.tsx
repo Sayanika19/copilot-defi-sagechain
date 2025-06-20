@@ -7,8 +7,13 @@ import ChatMessage from "@/components/chat/ChatMessage";
 import ChatLoadingIndicator from "@/components/chat/ChatLoadingIndicator";
 import SuggestedActions from "@/components/chat/SuggestedActions";
 import ChatInput from "@/components/chat/ChatInput";
+import { WalletData } from "@/components/WalletConnector";
 
-const AIChat = () => {
+interface AIChatProps {
+  walletData?: WalletData | null;
+}
+
+const AIChat = ({ walletData }: AIChatProps) => {
   const {
     messages,
     inputValue,
@@ -16,7 +21,7 @@ const AIChat = () => {
     scrollAreaRef,
     setInputValue,
     handleSendMessage,
-  } = useAIChat();
+  } = useAIChat(walletData);
 
   const suggestedActions = [
     "Check my portfolio balance",

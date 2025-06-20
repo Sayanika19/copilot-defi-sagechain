@@ -3,8 +3,13 @@ import { useState, useRef, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Message } from "@/types/chat";
+import { WalletData } from "@/components/WalletConnector";
 
-export const useAIChat = () => {
+interface UseAIChatProps {
+  walletData?: WalletData | null;
+}
+
+export const useAIChat = (walletData?: WalletData | null) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -67,7 +72,8 @@ export const useAIChat = () => {
       
       console.log('Sending message to AI chat function:', {
         message: currentInput,
-        intent: intent
+        intent: intent,
+        walletData: walletData
       });
 
       // Create initial AI message for streaming
@@ -85,7 +91,7 @@ export const useAIChat = () => {
       setMessages(prev => [...prev, initialAiMessage]);
       setStreamingMessageId(aiMessageId);
 
-      // Call the edge function for streaming response
+      // Call the edge function for streaming response with wallet data
       const response = await fetch(`https://jahnklalgnspbttbippf.supabase.co/functions/v1/ai-chat`, {
         method: 'POST',
         headers: {
@@ -94,7 +100,8 @@ export const useAIChat = () => {
         },
         body: JSON.stringify({
           message: currentInput,
-          intent: intent
+          intent: intent,
+          walletData: walletData
         })
       });
 
