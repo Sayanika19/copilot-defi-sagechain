@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from "@/components/ui/badge";
 import { Wallet, Copy, ExternalLink, ChevronDown, Loader2, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useWalletBalance } from "@/hooks/useWalletBalance";
 
 interface WalletConnectorProps {
   isConnected: boolean;
@@ -38,7 +39,11 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectedWalletType, setConnectedWalletType] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [currentWalletData, setCurrentWalletData] = useState<WalletData | null>(null);
   const { toast } = useToast();
+
+  // Use real-time balance hook
+  const { balances, prices, totalValue, isLoading: balanceLoading } = useWalletBalance(currentWalletData);
 
   const wallets = [
     { 
@@ -66,12 +71,16 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
             setWalletAddress(address);
             const balance = await updateBalance(address);
             setConnectedWalletType('MetaMask');
-            onConnect({
+            
+            const walletData = {
               address,
               balance,
               walletType: 'MetaMask',
-              tokens: getMockTokenBalances()
-            });
+              tokens: {} // Will be populated by useWalletBalance hook
+            };
+            
+            setCurrentWalletData(walletData);
+            onConnect(walletData);
           }
         } catch (error) {
           console.error('Error checking wallet connection:', error);
@@ -82,23 +91,39 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
     checkConnection();
   }, [onConnect]);
 
+  // Update wallet data when balances change
+  useEffect(() => {
+    if (currentWalletData && Object.keys(balances).length > 0) {
+      const updatedWalletData = {
+        ...currentWalletData,
+        tokens: balances,
+        balance: `${balances.ETH?.toFixed(4) || '0.0000'} ETH`
+      };
+      setCurrentWalletData(updatedWalletData);
+      onConnect(updatedWalletData);
+    }
+  }, [balances, currentWalletData?.address]);
+
   // Listen for account changes
   useEffect(() => {
     if (typeof window !== 'undefined' && window.ethereum) {
       const handleAccountsChanged = async (accounts: string[]) => {
         if (accounts.length === 0) {
-          // User disconnected wallet
           disconnectWallet();
         } else {
           const address = accounts[0];
           setWalletAddress(address);
           const balance = await updateBalance(address);
-          onConnect({
+          
+          const walletData = {
             address,
             balance,
             walletType: connectedWalletType || 'MetaMask',
-            tokens: getMockTokenBalances()
-          });
+            tokens: balances
+          };
+          
+          setCurrentWalletData(walletData);
+          onConnect(walletData);
         }
       };
 
@@ -110,16 +135,7 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
         }
       };
     }
-  }, [connectedWalletType, onConnect]);
-
-  const getMockTokenBalances = () => ({
-    ETH: 2.5479,
-    BTC: 0.0342,
-    USDC: 1250.75,
-    USDT: 850.20,
-    UNI: 45.8,
-    AAVE: 8.2
-  });
+  }, [connectedWalletType, onConnect, balances]);
 
   const updateBalance = async (address: string): Promise<string> => {
     try {
@@ -129,7 +145,6 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
           params: [address, 'latest']
         });
         
-        // Convert from wei to ETH using native JavaScript
         const balanceInWei = parseInt(balance, 16);
         const balanceInEth = balanceInWei / Math.pow(10, 18);
         const formattedBalance = `${balanceInEth.toFixed(4)} ETH`;
@@ -138,11 +153,11 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
       }
     } catch (error) {
       console.error('Error fetching balance:', error);
-      const fallbackBalance = '2.5479 ETH';
+      const fallbackBalance = '0.0000 ETH';
       setWalletBalance(fallbackBalance);
       return fallbackBalance;
     }
-    return '2.5479 ETH';
+    return '0.0000 ETH';
   };
 
   const connectMetaMask = async () => {
@@ -166,12 +181,16 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
         setWalletAddress(address);
         const balance = await updateBalance(address);
         setConnectedWalletType('MetaMask');
-        onConnect({
+        
+        const walletData = {
           address,
           balance,
           walletType: 'MetaMask',
-          tokens: getMockTokenBalances()
-        });
+          tokens: {} // Will be populated by useWalletBalance hook
+        };
+        
+        setCurrentWalletData(walletData);
+        onConnect(walletData);
         setIsOpen(false);
         
         toast({
@@ -201,19 +220,22 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
         description: "Please scan the QR code with your mobile wallet app.",
       });
 
-      // Simulate connection delay for WalletConnect
       setTimeout(() => {
         const mockAddress = '0x742d35Cc6B5C73Ff5cb78a3e7B9B6834567f8f3A';
         const mockBalance = '2.5479 ETH';
         setWalletAddress(mockAddress);
         setWalletBalance(mockBalance);
         setConnectedWalletType('WalletConnect');
-        onConnect({
+        
+        const walletData = {
           address: mockAddress,
           balance: mockBalance,
           walletType: 'WalletConnect',
-          tokens: getMockTokenBalances()
-        });
+          tokens: {}
+        };
+        
+        setCurrentWalletData(walletData);
+        onConnect(walletData);
         setIsOpen(false);
         setIsConnecting(false);
         setSelectedWallet('');
@@ -256,16 +278,15 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
   const disconnectWallet = () => {
     console.log('Disconnecting wallet...');
     
-    // Reset all wallet-related state
     setWalletAddress('');
     setWalletBalance('');
     setConnectedWalletType('');
+    setCurrentWalletData(null);
     setIsOpen(false);
     setShowDropdown(false);
     setSelectedWallet('');
     setIsConnecting(false);
     
-    // Call the parent's disconnect handler - this is the key fix
     if (onDisconnect) {
       onDisconnect();
     }
@@ -283,7 +304,7 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
 
   if (isConnected && walletAddress) {
     return (
-      <div className="relative">
+      <div className="relative z-50">
         <Button 
           variant="outline" 
           className="border-purple-600 text-purple-400 hover:bg-purple-600/10"
@@ -317,8 +338,25 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-purple-300">Balance</span>
-                  <span className="text-white font-medium">{walletBalance}</span>
+                  <span className="text-sm text-purple-300">ETH Balance</span>
+                  <span className="text-white font-medium">
+                    {balanceLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      `${balances.ETH?.toFixed(4) || '0.0000'} ETH`
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-purple-300">Portfolio Value</span>
+                  <span className="text-white font-medium">
+                    {balanceLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      `$${totalValue.toFixed(2)}`
+                    )}
+                  </span>
                 </div>
               </div>
               
@@ -334,7 +372,7 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
                     <DialogHeader>
                       <DialogTitle className="text-white">Wallet Details</DialogTitle>
                       <DialogDescription className="text-purple-300">
-                        Manage your connected wallet
+                        Real-time wallet information
                       </DialogDescription>
                     </DialogHeader>
                     
@@ -346,7 +384,7 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
                               <span className="text-2xl">{connectedWalletType === 'MetaMask' ? '🦊' : '🔗'}</span>
                               <span className="text-white font-medium">{connectedWalletType}</span>
                             </div>
-                            <Badge className="bg-green-600/20 text-green-400">Connected</Badge>
+                            <Badge className="bg-green-600/20 text-green-400">Live Data</Badge>
                           </div>
                           
                           <div className="space-y-2">
@@ -360,17 +398,23 @@ const WalletConnector = ({ isConnected, onConnect, onDisconnect }: WalletConnect
                               </div>
                             </div>
                             
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-purple-300">Balance</span>
-                              <span className="text-white font-medium">{walletBalance}</span>
-                            </div>
-                            
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-purple-300">Network</span>
-                              <div className="flex items-center space-x-1">
-                                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                                <span className="text-white text-sm">Ethereum Mainnet</span>
+                            {Object.entries(balances).map(([token, amount]) => (
+                              <div key={token} className="flex items-center justify-between">
+                                <span className="text-sm text-purple-300">{token}</span>
+                                <div className="text-right">
+                                  <div className="text-white text-sm">{amount.toFixed(4)} {token}</div>
+                                  {prices[token] && (
+                                    <div className="text-xs text-gray-400">
+                                      ${(amount * prices[token]).toFixed(2)}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
+                            ))}
+                            
+                            <div className="flex items-center justify-between pt-2 border-t border-slate-700">
+                              <span className="text-sm font-medium text-purple-300">Total Value</span>
+                              <span className="text-white font-bold">${totalValue.toFixed(2)}</span>
                             </div>
                           </div>
                         </CardContent>

@@ -24,23 +24,30 @@ export const handleChatRequest = async (req: Request): Promise<Response> => {
       return createErrorResponse('AI service is temporarily unavailable');
     }
 
-    // Create context-aware prompt with wallet data
+    // Create context-aware prompt with real wallet data
     let contextualMessage = message;
     if (walletData && intent === 'check_balance') {
+      const tokenList = walletData.tokens ? Object.entries(walletData.tokens)
+        .map(([token, amount]) => `${token}: ${typeof amount === 'number' ? amount.toFixed(4) : amount}`)
+        .join(', ') : 'No token data available';
+
       const walletInfo = `
-User's Connected Wallet Information:
-- Address: ${walletData.address}
-- Balance: ${walletData.balance}
-- Wallet Type: ${walletData.walletType}
-${walletData.tokens ? `- Token Holdings: ${JSON.stringify(walletData.tokens, null, 2)}` : ''}
+REAL-TIME WALLET DATA FOR USER:
+- Wallet Address: ${walletData.address}
+- Connected Wallet: ${walletData.walletType}
+- Current Token Holdings: ${tokenList}
 
-User Question: ${message}
+IMPORTANT: This is LIVE data from the user's actual MetaMask wallet. Provide specific analysis based on these exact holdings. Calculate USD values if possible and give portfolio insights.
 
-Please provide a detailed analysis of their portfolio based on the actual wallet data above. Include specific balance information, token breakdown, and relevant insights.`;
+User Question: ${message}`;
       
       contextualMessage = walletInfo;
     } else if (walletData) {
-      contextualMessage = `User has connected wallet: ${walletData.address} with balance: ${walletData.balance}. User question: ${message}`;
+      const tokenList = walletData.tokens ? Object.entries(walletData.tokens)
+        .map(([token, amount]) => `${token}: ${typeof amount === 'number' ? amount.toFixed(4) : amount}`)
+        .join(', ') : 'No token data available';
+
+      contextualMessage = `User has connected ${walletData.walletType} wallet: ${walletData.address} with holdings: ${tokenList}. User question: ${message}`;
     }
 
     // Generate streaming AI response
