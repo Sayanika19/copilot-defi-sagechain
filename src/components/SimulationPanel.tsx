@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
-import { Play, Calculator, TrendingUp, AlertCircle, CheckCircle2, Settings } from "lucide-react";
+import { Play, Calculator, TrendingUp, AlertCircle, CheckCircle2, Settings, RotateCcw } from "lucide-react";
+import SimulationGraph from './SimulationGraph';
 
 const SimulationPanel = () => {
   const [simulationType, setSimulationType] = useState('swap');
@@ -59,6 +60,15 @@ const SimulationPanel = () => {
       setSimulationResult(mockResult);
       setIsSimulating(false);
     }, 2000);
+  };
+
+  const resetSimulation = () => {
+    setSimulationResult(null);
+    setFromToken('');
+    setToToken('');
+    setAmount('');
+    setSlippageTolerance([0.5]);
+    setSelectedProtocol('');
   };
 
   return (
@@ -401,10 +411,14 @@ const SimulationPanel = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Action Buttons - Modified to include Reset */}
             <div className="flex gap-4 pt-4 border-t border-slate-700">
-              <Button className="bg-green-600 hover:bg-green-700 flex-1">
-                Execute Transaction
+              <Button 
+                onClick={resetSimulation}
+                className="bg-blue-600 hover:bg-blue-700 flex-1"
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Reset Simulation
               </Button>
               <Button variant="outline" className="border-purple-600 text-purple-400">
                 Modify Parameters
@@ -413,6 +427,9 @@ const SimulationPanel = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Real-Time Simulation Graph */}
+      {simulationResult && <SimulationGraph simulationResult={simulationResult} />}
     </div>
   );
 };
