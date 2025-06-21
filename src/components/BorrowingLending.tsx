@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DollarSign, ArrowUpDown, Shield, Zap, TrendingUp, Plus, Minus, Clock, CheckCircle } from "lucide-react";
 import { useLendingData } from "@/hooks/useLendingData";
 import AITokenCalculator from "@/components/AITokenCalculator";
+import CollateralBorrowCalculator from "@/components/CollateralBorrowCalculator";
 import FeatureCallout from "@/components/FeatureCallout";
 
 const BorrowingLending = () => {
@@ -26,6 +27,7 @@ const BorrowingLending = () => {
   const [amount, setAmount] = useState<string>("");
   const [selectedFromChain, setSelectedFromChain] = useState<string>("");
   const [selectedToChain, setSelectedToChain] = useState<string>("");
+  const [borrowPrediction, setBorrowPrediction] = useState<any>(null);
 
   const handleLend = async () => {
     if (!selectedAsset || !amount) return;
@@ -128,10 +130,24 @@ const BorrowingLending = () => {
       <AITokenCalculator 
         onCalculationComplete={(result) => {
           console.log('AI Calculation completed:', result);
-          // Auto-populate forms with AI recommendations
           if (result.tokenAmount) {
             setAmount(result.tokenAmount.toString());
           }
+        }}
+      />
+
+      {/* Collateral-Based Borrowing Calculator */}
+      <FeatureCallout
+        title="Collateral-Based Borrowing"
+        description="Use your ETH, GO, or SAGE coins as collateral to borrow other tokens. Our AI calculates optimal borrow amounts, liquidation risks, and provides safety recommendations based on your collateral."
+        variant="warning"
+        className="mb-6"
+      />
+      
+      <CollateralBorrowCalculator 
+        onBorrowCalculated={(result) => {
+          setBorrowPrediction(result);
+          setAmount(result.recommendedBorrowAmount.toString());
         }}
       />
 
@@ -211,58 +227,72 @@ const BorrowingLending = () => {
                 </TabsContent>
 
                 <TabsContent value="borrow" className="space-y-4 mt-6">
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="borrow-asset" className="text-white">Select GO/SAGE Token</Label>
-                      <Select value={selectedAsset} onValueChange={setSelectedAsset}>
-                        <SelectTrigger className="bg-black/20 border-purple-600/30 text-white">
-                          <SelectValue placeholder="Choose GO or SAGE coin to borrow" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-black/90 border-purple-600/30">
-                          <SelectItem value="GO" className="text-white hover: bg-purple-600/20">
-                            <div className="flex items-center justify-between w-full">
-                              <span>GO Coin (1x ETH)</span>
-                              <Badge className="bg-red-500/20 text-red-400 ml-2">
-                                12.0% APY
-                              </Badge>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="SAGE" className="text-white hover:bg-purple-600/20">
-                            <div className="flex items-center justify-between w-full">
-                              <span>SAGE Coin (2x ETH)</span>
-                              <Badge className="bg-red-500/20 text-red-400 ml-2">
-                                13.5% APY
-                              </Badge>
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                  {borrowPrediction && (
+                    <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-4">
+                      <h4 className="text-blue-400 font-medium mb-2">AI Borrow Recommendation</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-blue-300">Recommended Amount:</span>
+                          <p className="text-white font-semibold">{borrowPrediction.recommendedBorrowAmount.toFixed(4)}</p>
+                        </div>
+                        <div>
+                          <span className="text-blue-300">Health Factor:</span>
+                          <p className="text-white font-semibold">{borrowPrediction.healthFactor.toFixed(2)}</p>
+                        </div>
+                      </div>
                     </div>
+                  )}
 
-                    <div>
-                      <Label htmlFor="borrow-amount" className="text-white">Amount</Label>
-                      <Input
-                        id="borrow-amount"
-                        type="number"
-                        placeholder="Enter amount to borrow (AI predicted)"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="bg-black/20 border-purple-600/30 text-white"
-                      />
-                      <p className="text-purple-300 text-xs mt-1">
-                        Collateral required: 150% for GO, 140% for SAGE
-                      </p>
-                    </div>
-
-                    <Button 
-                      onClick={handleBorrow}
-                      disabled={!selectedAsset || !amount || isLoading}
-                      className="w-full bg-blue-600 hover:blue-700"
-                    >
-                      <Minus className="w-4 h-4 mr-2" />
-                      {isLoading ? "Processing via MetaMask..." : `Borrow ${selectedAsset} Coins`}
-                    </Button>
+                  <div>
+                    <Label htmlFor="borrow-asset" className="text-white">Select GO/SAGE Token</Label>
+                    <Select value={selectedAsset} onValueChange={setSelectedAsset}>
+                      <SelectTrigger className="bg-black/20 border-purple-600/30 text-white">
+                        <SelectValue placeholder="Choose GO or SAGE coin to borrow" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-black/90 border-purple-600/30">
+                        <SelectItem value="GO" className="text-white hover:bg-purple-600/20">
+                          <div className="flex items-center justify-between w-full">
+                            <span>GO Coin (1x ETH)</span>
+                            <Badge className="bg-red-500/20 text-red-400 ml-2">
+                              12.0% APY
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="SAGE" className="text-white hover:bg-purple-600/20">
+                          <div className="flex items-center justify-between w-full">
+                            <span>SAGE Coin (2x ETH)</span>
+                            <Badge className="bg-red-500/20 text-red-400 ml-2">
+                              13.5% APY
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+
+                  <div>
+                    <Label htmlFor="borrow-amount" className="text-white">Amount</Label>
+                    <Input
+                      id="borrow-amount"
+                      type="number"
+                      placeholder={borrowPrediction ? "AI predicted amount" : "Enter amount to borrow"}
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      className="bg-black/20 border-purple-600/30 text-white"
+                    />
+                    <p className="text-purple-300 text-xs mt-1">
+                      Collateral required: 150% for GO, 140% for SAGE
+                    </p>
+                  </div>
+
+                  <Button 
+                    onClick={handleBorrow}
+                    disabled={!selectedAsset || !amount || isLoading}
+                    className="w-full bg-blue-600 hover:blue-700"
+                  >
+                    <Minus className="w-4 h-4 mr-2" />
+                    {isLoading ? "Processing via MetaMask..." : `Borrow ${selectedAsset} Coins`}
+                  </Button>
                 </TabsContent>
 
                 <TabsContent value="deposit" className="space-y-4 mt-6">

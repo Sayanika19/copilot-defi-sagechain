@@ -1,9 +1,9 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, DollarSign, Users, Activity, Zap, Shield, Brain } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Users, Activity, Zap, Shield, Brain, ArrowUpDown } from "lucide-react";
 import PortfolioPerformanceChart from "./PortfolioPerformanceChart";
 import { WalletData } from "./WalletConnector";
+import { useNavigate } from "react-router-dom";
 
 interface DashboardProps {
   isConnected: boolean;
@@ -11,6 +11,8 @@ interface DashboardProps {
 }
 
 const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
+  const navigate = useNavigate();
+
   // Calculate portfolio value based on actual MetaMask wallet balance
   const getPortfolioValue = () => {
     if (!walletData?.balance || !isConnected) return 0;
@@ -49,6 +51,25 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
   const portfolioChange = portfolioValue > 0 ? 0.1 : 0; // Small positive change for non-zero portfolios
   const activePositions = getActivePositions();
   const riskScore = getRiskScore();
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'swap':
+        navigate('/?tab=trading');
+        break;
+      case 'liquidity':
+        navigate('/?tab=lending');
+        break;
+      case 'lend':
+        navigate('/?tab=lending');
+        break;
+      case 'stake':
+        navigate('/?tab=lending');
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -154,19 +175,31 @@ const Dashboard = ({ isConnected, walletData }: DashboardProps) => {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <button className="p-4 bg-purple-600/20 border border-purple-600/30 rounded-lg hover:bg-purple-600/30 transition-all">
-                <Zap className="w-6 h-6 text-purple-400 mb-2" />
+              <button 
+                onClick={() => handleQuickAction('swap')}
+                className="p-4 bg-purple-600/20 border border-purple-600/30 rounded-lg hover:bg-purple-600/30 transition-all"
+              >
+                <ArrowUpDown className="w-6 h-6 text-purple-400 mb-2" />
                 <div className="text-white font-medium text-sm">Swap Tokens</div>
               </button>
-              <button className="p-4 bg-blue-600/20 border border-blue-600/30 rounded-lg hover:bg-blue-600/30 transition-all">
+              <button 
+                onClick={() => handleQuickAction('liquidity')}
+                className="p-4 bg-blue-600/20 border border-blue-600/30 rounded-lg hover:bg-blue-600/30 transition-all"
+              >
                 <TrendingUp className="w-6 h-6 text-blue-400 mb-2" />
                 <div className="text-white font-medium text-sm">Add Liquidity</div>
               </button>
-              <button className="p-4 bg-green-600/20 border border-green-600/30 rounded-lg hover:bg-green-600/30 transition-all">
+              <button 
+                onClick={() => handleQuickAction('lend')}
+                className="p-4 bg-green-600/20 border border-green-600/30 rounded-lg hover:bg-green-600/30 transition-all"
+              >
                 <DollarSign className="w-6 h-6 text-green-400 mb-2" />
                 <div className="text-white font-medium text-sm">Lend Assets</div>
               </button>
-              <button className="p-4 bg-orange-600/20 border border-orange-600/30 rounded-lg hover:bg-orange-600/30 transition-all">
+              <button 
+                onClick={() => handleQuickAction('stake')}
+                className="p-4 bg-orange-600/20 border border-orange-600/30 rounded-lg hover:bg-orange-600/30 transition-all"
+              >
                 <Activity className="w-6 h-6 text-orange-400 mb-2" />
                 <div className="text-white font-medium text-sm">Stake Tokens</div>
               </button>
