@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +13,6 @@ import { WalletData } from "@/components/WalletConnector";
 import { useWalletBalance } from "@/hooks/useWalletBalance";
 import { useCoinGeckoPrice } from "@/hooks/useCoinGeckoPrice";
 import { useParaSwap } from "@/hooks/useParaSwap";
-import FeatureCallout from "@/components/FeatureCallout";
 
 interface CryptoTradingProps {
   walletData?: WalletData | null;
@@ -251,13 +251,6 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
 
             {/* Buy Tab */}
             <TabsContent value="buy" className="space-y-4">
-              <FeatureCallout
-                title="Buy Cryptocurrency"
-                description="Purchase cryptocurrencies with USD. Enter the amount you want to spend, select the cryptocurrency, and see exactly how many tokens you'll receive at current market rates."
-                variant="info"
-                className="mb-4"
-              />
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="buy-amount" className="text-purple-300">Amount (USD)</Label>
@@ -307,13 +300,6 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
 
             {/* Sell Tab */}
             <TabsContent value="sell" className="space-y-4">
-              <FeatureCallout
-                title="Cash Out to USD"
-                description="Convert your cryptocurrency holdings to USD. Select the token and amount to sell, and see the exact USD value you'll receive based on current market prices."
-                variant="warning"
-                className="mb-4"
-              />
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="sell-amount" className="text-purple-300">Amount</Label>
@@ -373,13 +359,6 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
 
             {/* Swap Tab */}
             <TabsContent value="swap" className="space-y-4">
-              <FeatureCallout
-                title="Token Swap"
-                description="Exchange one cryptocurrency for another instantly via ParaSwap. Get the best rates across multiple DEXs with automatic routing and minimal slippage."
-                variant="success"
-                className="mb-4"
-              />
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-purple-300">From</Label>
@@ -483,7 +462,7 @@ const CryptoTrading = ({ walletData }: CryptoTradingProps) => {
                 <div key={symbol} className="p-3 bg-slate-800/30 rounded-lg border border-purple-800/20">
                   <div className="text-center">
                     <h3 className="text-white font-medium">{symbol}</h3>
-                    <p className="text-sm text-purple-300">{balance}</p>
+                    <p className="text-purple-300 text-sm">{balance}</p>
                   </div>
                 </div>
               ))}
