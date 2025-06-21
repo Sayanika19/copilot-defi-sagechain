@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
 import { Play, Calculator, TrendingUp, AlertCircle, CheckCircle2, Settings, RotateCcw } from "lucide-react";
 import SimulationGraph from './SimulationGraph';
+import FeatureCallout from './FeatureCallout';
 
 const SimulationPanel = () => {
   const [simulationType, setSimulationType] = useState('swap');
@@ -73,6 +74,13 @@ const SimulationPanel = () => {
 
   return (
     <div className="space-y-6">
+      <FeatureCallout
+        title="DeFi Simulation Laboratory"
+        description="Advanced DeFi simulation environment for risk-free testing of trading strategies, lending positions, and liquidity provision scenarios with real market data and gas estimation."
+        variant="info"
+        defaultExpanded={true}
+      />
+
       <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
@@ -85,351 +93,394 @@ const SimulationPanel = () => {
         </CardHeader>
         
         <CardContent>
-          <Tabs value={simulationType} onValueChange={setSimulationType} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 bg-slate-800/50">
-              <TabsTrigger value="swap" className="data-[state=active]:bg-purple-600">Token Swap</TabsTrigger>
-              <TabsTrigger value="lending" className="data-[state=active]:bg-purple-600">Lending</TabsTrigger>
-              <TabsTrigger value="liquidity" className="data-[state=active]:bg-purple-600">Liquidity</TabsTrigger>
-            </TabsList>
+          <FeatureCallout
+            title="Multi-Strategy Simulation"
+            description="Choose between token swaps, lending protocols, and liquidity provision strategies. Each simulation provides detailed analysis including gas costs, slippage, and optimal routing."
+          />
 
-            <TabsContent value="swap" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm text-purple-300">From Token</label>
-                  <Select value={fromToken} onValueChange={setFromToken}>
-                    <SelectTrigger className="bg-slate-800/50 border-purple-800/30 text-white">
-                      <SelectValue placeholder="Select token" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-purple-800/30">
-                      {mockTokens.map((token) => (
-                        <SelectItem key={token.symbol} value={token.symbol} className="text-white">
-                          {token.symbol} - {token.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm text-purple-300">To Token</label>
-                  <Select value={toToken} onValueChange={setToToken}>
-                    <SelectTrigger className="bg-slate-800/50 border-purple-800/30 text-white">
-                      <SelectValue placeholder="Select token" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-purple-800/30">
-                      {mockTokens.map((token) => (
-                        <SelectItem key={token.symbol} value={token.symbol} className="text-white">
-                          {token.symbol} - {token.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm text-purple-300">Amount</label>
-                <Input
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Enter amount"
-                  className="bg-slate-800/50 border-purple-800/30 text-white"
+          <div className="mt-4">
+            <Tabs value={simulationType} onValueChange={setSimulationType} className="space-y-6">
+              <TabsList className="grid w-full grid-cols-3 bg-slate-800/50">
+                <TabsTrigger value="swap" className="data-[state=active]:bg-purple-600">Token Swap</TabsTrigger>
+                <TabsTrigger value="lending" className="data-[state=active]:bg-purple-600">Lending</TabsTrigger>
+                <TabsTrigger value="liquidity" className="data-[state=active]:bg-purple-600">Liquidity</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="swap" className="space-y-6">
+                <FeatureCallout
+                  title="Token Swap Simulation"
+                  description="Simulate token swaps across multiple DEXs with real-time price impact analysis, optimal route finding, and slippage protection settings."
+                  variant="success"
                 />
-              </div>
 
-              {/* Protocol Selection */}
-              <div className="space-y-2">
-                <label className="text-sm text-purple-300">Protocol (Optional)</label>
-                <Select value={selectedProtocol} onValueChange={setSelectedProtocol}>
-                  <SelectTrigger className="bg-slate-800/50 border-purple-800/30 text-white">
-                    <SelectValue placeholder="Auto-select best route" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-purple-800/30">
-                    {swapProtocols.map((protocol) => (
-                      <SelectItem key={protocol.name} value={protocol.name} className="text-white">
-                        <div className="flex items-center justify-between w-full">
-                          <span>{protocol.name}</span>
-                          <div className="flex gap-2 ml-2">
-                            <Badge variant="outline" className="text-xs border-purple-600 text-purple-300">
-                              {protocol.fee}
-                            </Badge>
-                            <Badge variant="outline" className="text-xs border-blue-600 text-blue-300">
-                              {protocol.liquidity}
-                            </Badge>
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Slippage Tolerance */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-purple-400" />
-                  <label className="text-sm text-purple-300">Slippage Tolerance</label>
-                </div>
-                
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-400">0.1%</span>
-                    <span className="text-sm font-medium text-white">{slippageTolerance[0]}%</span>
-                    <span className="text-sm text-gray-400">5.0%</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm text-purple-300">From Token</label>
+                    <Select value={fromToken} onValueChange={setFromToken}>
+                      <SelectTrigger className="bg-slate-800/50 border-purple-800/30 text-white">
+                        <SelectValue placeholder="Select token" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-purple-800/30">
+                        {mockTokens.map((token) => (
+                          <SelectItem key={token.symbol} value={token.symbol} className="text-white">
+                            {token.symbol} - {token.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
-                  <Slider
-                    value={slippageTolerance}
-                    onValueChange={setSlippageTolerance}
-                    max={5}
-                    min={0.1}
-                    step={0.1}
-                    className="w-full"
+                  <div className="space-y-2">
+                    <label className="text-sm text-purple-300">To Token</label>
+                    <Select value={toToken} onValueChange={setToToken}>
+                      <SelectTrigger className="bg-slate-800/50 border-purple-800/30 text-white">
+                        <SelectValue placeholder="Select token" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-purple-800/30">
+                        {mockTokens.map((token) => (
+                          <SelectItem key={token.symbol} value={token.symbol} className="text-white">
+                            {token.symbol} - {token.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm text-purple-300">Amount</label>
+                  <Input
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    className="bg-slate-800/50 border-purple-800/30 text-white"
+                  />
+                </div>
+
+                {/* Protocol Selection */}
+                <div className="space-y-2">
+                  <label className="text-sm text-purple-300">Protocol (Optional)</label>
+                  <Select value={selectedProtocol} onValueChange={setSelectedProtocol}>
+                    <SelectTrigger className="bg-slate-800/50 border-purple-800/30 text-white">
+                      <SelectValue placeholder="Auto-select best route" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800 border-purple-800/30">
+                      {swapProtocols.map((protocol) => (
+                        <SelectItem key={protocol.name} value={protocol.name} className="text-white">
+                          <div className="flex items-center justify-between w-full">
+                            <span>{protocol.name}</span>
+                            <div className="flex gap-2 ml-2">
+                              <Badge variant="outline" className="text-xs border-purple-600 text-purple-300">
+                                {protocol.fee}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs border-blue-600 text-blue-300">
+                                {protocol.liquidity}
+                              </Badge>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Slippage Tolerance */}
+                <div className="space-y-4">
+                  <FeatureCallout
+                    title="Advanced Slippage Settings"
+                    description="Fine-tune slippage tolerance to balance execution certainty with price protection. Lower values provide better price guarantees but higher failure risk."
+                    variant="warning"
                   />
                   
-                  <div className="grid grid-cols-4 gap-2">
-                    {[0.1, 0.5, 1.0, 3.0].map((preset) => (
-                      <Button
-                        key={preset}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSlippageTolerance([preset])}
-                        className={`text-xs ${
-                          slippageTolerance[0] === preset
-                            ? 'border-purple-600 bg-purple-600/20 text-purple-300'
-                            : 'border-slate-600 text-slate-400 hover:border-purple-600 hover:text-purple-300'
-                        }`}
-                      >
-                        {preset}%
-                      </Button>
-                    ))}
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-purple-400" />
+                    <label className="text-sm text-purple-300">Slippage Tolerance</label>
                   </div>
                   
-                  <p className="text-xs text-gray-500">
-                    Your transaction will revert if the price changes unfavorably by more than this percentage.
-                  </p>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="lending" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm text-purple-300">Asset to Lend</label>
-                  <Select>
-                    <SelectTrigger className="bg-slate-800/50 border-purple-800/30 text-white">
-                      <SelectValue placeholder="Select asset" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-purple-800/30">
-                      {mockTokens.map((token) => (
-                        <SelectItem key={token.symbol} value={token.symbol} className="text-white">
-                          {token.symbol} - {token.name}
-                        </SelectItem>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-400">0.1%</span>
+                      <span className="text-sm font-medium text-white">{slippageTolerance[0]}%</span>
+                      <span className="text-sm text-gray-400">5.0%</span>
+                    </div>
+                    
+                    <Slider
+                      value={slippageTolerance}
+                      onValueChange={setSlippageTolerance}
+                      max={5}
+                      min={0.1}
+                      step={0.1}
+                      className="w-full"
+                    />
+                    
+                    <div className="grid grid-cols-4 gap-2">
+                      {[0.1, 0.5, 1.0, 3.0].map((preset) => (
+                        <Button
+                          key={preset}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSlippageTolerance([preset])}
+                          className={`text-xs ${
+                            slippageTolerance[0] === preset
+                              ? 'border-purple-600 bg-purple-600/20 text-purple-300'
+                              : 'border-slate-600 text-slate-400 hover:border-purple-600 hover:text-purple-300'
+                          }`}
+                        >
+                          {preset}%
+                        </Button>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                    
+                    <p className="text-xs text-gray-500">
+                      Your transaction will revert if the price changes unfavorably by more than this percentage.
+                    </p>
+                  </div>
                 </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm text-purple-300">Protocol</label>
-                  <Select>
-                    <SelectTrigger className="bg-slate-800/50 border-purple-800/30 text-white">
-                      <SelectValue placeholder="Select protocol" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-purple-800/30">
-                      <SelectItem value="aave" className="text-white">Aave V3</SelectItem>
-                      <SelectItem value="compound" className="text-white">Compound V3</SelectItem>
-                      <SelectItem value="morpho" className="text-white">Morpho</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm text-purple-300">Amount</label>
-                <Input
-                  placeholder="Enter amount to lend"
-                  className="bg-slate-800/50 border-purple-800/30 text-white"
+              </TabsContent>
+
+              <TabsContent value="lending" className="space-y-4">
+                <FeatureCallout
+                  title="Lending Protocol Simulation"
+                  description="Test lending strategies across different protocols like Aave, Compound, and Morpho. Compare APY rates, liquidation risks, and collateral requirements."
+                  variant="success"
                 />
-              </div>
-            </TabsContent>
 
-            <TabsContent value="liquidity" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm text-purple-300">Token A</label>
-                  <Select>
-                    <SelectTrigger className="bg-slate-800/50 border-purple-800/30 text-white">
-                      <SelectValue placeholder="Select token" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-purple-800/30">
-                      {mockTokens.map((token) => (
-                        <SelectItem key={token.symbol} value={token.symbol} className="text-white">
-                          {token.symbol} - {token.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm text-purple-300">Asset to Lend</label>
+                    <Select>
+                      <SelectTrigger className="bg-slate-800/50 border-purple-800/30 text-white">
+                        <SelectValue placeholder="Select asset" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-purple-800/30">
+                        {mockTokens.map((token) => (
+                          <SelectItem key={token.symbol} value={token.symbol} className="text-white">
+                            {token.symbol} - {token.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm text-purple-300">Protocol</label>
+                    <Select>
+                      <SelectTrigger className="bg-slate-800/50 border-purple-800/30 text-white">
+                        <SelectValue placeholder="Select protocol" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-purple-800/30">
+                        <SelectItem value="aave" className="text-white">Aave V3</SelectItem>
+                        <SelectItem value="compound" className="text-white">Compound V3</SelectItem>
+                        <SelectItem value="morpho" className="text-white">Morpho</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm text-purple-300">Token B</label>
+                  <label className="text-sm text-purple-300">Amount</label>
+                  <Input
+                    placeholder="Enter amount to lend"
+                    className="bg-slate-800/50 border-purple-800/30 text-white"
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="liquidity" className="space-y-4">
+                <FeatureCallout
+                  title="Liquidity Pool Simulation"
+                  description="Simulate providing liquidity to AMM pools. Analyze impermanent loss risks, fee earnings potential, and optimal price ranges for concentrated liquidity positions."
+                  variant="info"
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm text-purple-300">Token A</label>
+                    <Select>
+                      <SelectTrigger className="bg-slate-800/50 border-purple-800/30 text-white">
+                        <SelectValue placeholder="Select token" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-purple-800/30">
+                        {mockTokens.map((token) => (
+                          <SelectItem key={token.symbol} value={token.symbol} className="text-white">
+                            {token.symbol} - {token.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm text-purple-300">Token B</label>
+                    <Select>
+                      <SelectTrigger className="bg-slate-800/50 border-purple-800/30 text-white">
+                        <SelectValue placeholder="Select token" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-purple-800/30">
+                        {mockTokens.map((token) => (
+                          <SelectItem key={token.symbol} value={token.symbol} className="text-white">
+                            {token.symbol} - {token.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm text-purple-300">Pool Fee Tier</label>
                   <Select>
                     <SelectTrigger className="bg-slate-800/50 border-purple-800/30 text-white">
-                      <SelectValue placeholder="Select token" />
+                      <SelectValue placeholder="Select fee tier" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800 border-purple-800/30">
-                      {mockTokens.map((token) => (
-                        <SelectItem key={token.symbol} value={token.symbol} className="text-white">
-                          {token.symbol} - {token.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="0.01" className="text-white">0.01% - Stable pairs</SelectItem>
+                      <SelectItem value="0.05" className="text-white">0.05% - Standard</SelectItem>
+                      <SelectItem value="0.3" className="text-white">0.30% - Exotic pairs</SelectItem>
+                      <SelectItem value="1" className="text-white">1.00% - Very exotic</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm text-purple-300">Pool Fee Tier</label>
-                <Select>
-                  <SelectTrigger className="bg-slate-800/50 border-purple-800/30 text-white">
-                    <SelectValue placeholder="Select fee tier" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-purple-800/30">
-                    <SelectItem value="0.01" className="text-white">0.01% - Stable pairs</SelectItem>
-                    <SelectItem value="0.05" className="text-white">0.05% - Standard</SelectItem>
-                    <SelectItem value="0.3" className="text-white">0.30% - Exotic pairs</SelectItem>
-                    <SelectItem value="1" className="text-white">1.00% - Very exotic</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </TabsContent>
+              </TabsContent>
 
-            <div className="flex gap-4">
-              <Button
-                onClick={runSimulation}
-                disabled={isSimulating || !fromToken || !toToken || !amount}
-                className="bg-purple-600 hover:bg-purple-700 flex-1"
-              >
-                {isSimulating ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Simulating...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Run Simulation
-                  </>
-                )}
-              </Button>
-              
-              <Button variant="outline" className="border-purple-600 text-purple-400 hover:bg-purple-600/10">
-                Save Template
-              </Button>
-            </div>
-          </Tabs>
+              <div className="flex gap-4">
+                <Button
+                  onClick={runSimulation}
+                  disabled={isSimulating || !fromToken || !toToken || !amount}
+                  className="bg-purple-600 hover:bg-purple-700 flex-1"
+                >
+                  {isSimulating ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Simulating...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 mr-2" />
+                      Run Simulation
+                    </>
+                  )}
+                </Button>
+                
+                <Button variant="outline" className="border-purple-600 text-purple-400 hover:bg-purple-600/10">
+                  Save Template
+                </Button>
+              </div>
+            </Tabs>
+          </div>
         </CardContent>
       </Card>
 
       {/* Simulation Results */}
       {simulationResult && (
-        <Card className="bg-black/40 border-green-800/30 backdrop-blur-xl">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-400" />
-              Simulation Results
-            </CardTitle>
-            <CardDescription className="text-green-300">
-              Preview of your transaction before execution
-            </CardDescription>
-          </CardHeader>
+        <>
+          <FeatureCallout
+            title="Simulation Results Analysis"
+            description="Comprehensive simulation results including confidence scores, optimal routing analysis, gas cost estimates, and risk assessment to help you make informed decisions."
+            variant="success"
+          />
           
-          <CardContent className="space-y-6">
-            {/* Confidence Score */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-purple-300">Confidence Score</span>
-                <span className="text-sm text-white font-medium">{simulationResult.confidence}%</span>
-              </div>
-              <Progress value={simulationResult.confidence} className="bg-slate-800" />
-            </div>
-
-            {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-slate-800/30 rounded-lg">
-                <div className="text-sm text-purple-300">Expected Output</div>
-                <div className="text-lg font-semibold text-white">{simulationResult.estimatedOutput}</div>
-              </div>
-              
-              <div className="p-4 bg-slate-800/30 rounded-lg">
-                <div className="text-sm text-purple-300">Estimated Gas</div>
-                <div className="text-lg font-semibold text-white">{simulationResult.gasFee}</div>
-              </div>
-              
-              <div className="p-4 bg-slate-800/30 rounded-lg">
-                <div className="text-sm text-purple-300">Price Impact</div>
-                <div className="text-lg font-semibold text-white">{simulationResult.priceImpact}</div>
-              </div>
-            </div>
-
-            {/* Route Information */}
-            <div className="space-y-3">
-              <h4 className="text-white font-medium">Optimal Route</h4>
-              <div className="flex items-center space-x-2">
-                {simulationResult.route.map((step, index) => (
-                  <div key={index} className="flex items-center">
-                    <Badge variant="outline" className="border-blue-600 text-blue-300">
-                      {step}
-                    </Badge>
-                    {index < simulationResult.route.length - 1 && (
-                      <TrendingUp className="w-4 h-4 text-purple-400 mx-2" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Risk Assessment */}
-            <div className="space-y-3">
-              <h4 className="text-white font-medium">Risk Assessment</h4>
+          <Card className="bg-black/40 border-green-800/30 backdrop-blur-xl">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-green-400" />
+                Simulation Results
+              </CardTitle>
+              <CardDescription className="text-green-300">
+                Preview of your transaction before execution
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent className="space-y-6">
               <div className="space-y-2">
-                {simulationResult.risks.map((risk, index) => (
-                  <div key={index} className={`flex items-center space-x-2 p-2 rounded-lg ${
-                    risk.level === 'low' ? 'bg-green-900/20' : 'bg-orange-900/20'
-                  }`}>
-                    <AlertCircle className={`w-4 h-4 ${
-                      risk.level === 'low' ? 'text-green-400' : 'text-orange-400'
-                    }`} />
-                    <span className={`text-sm ${
-                      risk.level === 'low' ? 'text-green-300' : 'text-orange-300'
-                    }`}>
-                      {risk.message}
-                    </span>
-                  </div>
-                ))}
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-purple-300">Confidence Score</span>
+                  <span className="text-sm text-white font-medium">{simulationResult.confidence}%</span>
+                </div>
+                <Progress value={simulationResult.confidence} className="bg-slate-800" />
               </div>
-            </div>
 
-            {/* Action Buttons - Modified to include Reset */}
-            <div className="flex gap-4 pt-4 border-t border-slate-700">
-              <Button 
-                onClick={resetSimulation}
-                className="bg-blue-600 hover:bg-blue-700 flex-1"
-              >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Reset Simulation
-              </Button>
-              <Button variant="outline" className="border-purple-600 text-purple-400">
-                Modify Parameters
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 bg-slate-800/30 rounded-lg">
+                  <div className="text-sm text-purple-300">Expected Output</div>
+                  <div className="text-lg font-semibold text-white">{simulationResult.estimatedOutput}</div>
+                </div>
+                
+                <div className="p-4 bg-slate-800/30 rounded-lg">
+                  <div className="text-sm text-purple-300">Estimated Gas</div>
+                  <div className="text-lg font-semibold text-white">{simulationResult.gasFee}</div>
+                </div>
+                
+                <div className="p-4 bg-slate-800/30 rounded-lg">
+                  <div className="text-sm text-purple-300">Price Impact</div>
+                  <div className="text-lg font-semibold text-white">{simulationResult.priceImpact}</div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-white font-medium">Optimal Route</h4>
+                <div className="flex items-center space-x-2">
+                  {simulationResult.route.map((step, index) => (
+                    <div key={index} className="flex items-center">
+                      <Badge variant="outline" className="border-blue-600 text-blue-300">
+                        {step}
+                      </Badge>
+                      {index < simulationResult.route.length - 1 && (
+                        <TrendingUp className="w-4 h-4 text-purple-400 mx-2" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-white font-medium">Risk Assessment</h4>
+                <div className="space-y-2">
+                  {simulationResult.risks.map((risk, index) => (
+                    <div key={index} className={`flex items-center space-x-2 p-2 rounded-lg ${
+                      risk.level === 'low' ? 'bg-green-900/20' : 'bg-orange-900/20'
+                    }`}>
+                      <AlertCircle className={`w-4 h-4 ${
+                        risk.level === 'low' ? 'text-green-400' : 'text-orange-400'
+                      }`} />
+                      <span className={`text-sm ${
+                        risk.level === 'low' ? 'text-green-300' : 'text-orange-300'
+                      }`}>
+                        {risk.message}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4 border-t border-slate-700">
+                <Button 
+                  onClick={resetSimulation}
+                  className="bg-blue-600 hover:bg-blue-700 flex-1"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Reset Simulation
+                </Button>
+                <Button variant="outline" className="border-purple-600 text-purple-400">
+                  Modify Parameters
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {/* Real-Time Simulation Graph */}
-      {simulationResult && <SimulationGraph simulationResult={simulationResult} />}
+      {simulationResult && (
+        <>
+          <FeatureCallout
+            title="Real-Time Simulation Visualization"
+            description="Interactive chart showing simulation results over time with market volatility analysis, price impact visualization, and statistical metrics for comprehensive strategy evaluation."
+            variant="info"
+          />
+          <SimulationGraph simulationResult={simulationResult} />
+        </>
+      )}
     </div>
   );
 };

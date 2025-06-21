@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Wallet, DollarSign, PieChart, AlertTriangle } from "lucide-react";
@@ -8,6 +7,7 @@ import AssetTracking from "./portfolio/AssetTracking";
 import PerformanceMetrics from "./portfolio/PerformanceMetrics";
 import TransactionHistory from "./portfolio/TransactionHistory";
 import InvestmentPositions from "./portfolio/InvestmentPositions";
+import FeatureCallout from "./FeatureCallout";
 import { useEffect, useState } from "react";
 
 interface PortfolioOverviewProps {
@@ -60,6 +60,12 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
   if (!isConnected) {
     return (
       <div className="grid grid-cols-1 gap-6">
+        <FeatureCallout
+          title="Portfolio Overview"
+          description="Connect your wallet to access comprehensive portfolio analytics, real-time balance tracking, asset allocation insights, and performance metrics across multiple blockchain networks."
+          variant="info"
+          defaultExpanded={true}
+        />
         <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
           <CardHeader className="text-center py-12">
             <Wallet className="w-16 h-16 text-purple-400 mx-auto mb-4" />
@@ -75,25 +81,44 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
 
   return (
     <div className="space-y-6">
+      <FeatureCallout
+        title="Live Portfolio Dashboard"
+        description="Real-time portfolio tracking with live MetaMask integration. Monitor your asset values, daily changes, and cross-chain positions with automatic updates every 30 seconds."
+        variant="success"
+      />
+
       {/* Wallet Info Header */}
       {walletData && (
-        <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-purple-300">Connected Wallet (Real-Time)</p>
-                <p className="text-white font-mono">{walletData.address}</p>
+        <>
+          <FeatureCallout
+            title="Wallet Connection Status"
+            description="Live connection to your MetaMask wallet showing real-time balance updates and address verification for secure portfolio tracking."
+            variant="info"
+          />
+          <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-purple-300">Connected Wallet (Real-Time)</p>
+                  <p className="text-white font-mono">{walletData.address}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-purple-300">Live Balance</p>
+                  <p className="text-white font-medium">{walletData.balance}</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-purple-300">Live Balance</p>
-                <p className="text-white font-medium">{walletData.balance}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {/* Real-time Portfolio Overview Cards */}
+      <FeatureCallout
+        title="Portfolio Metrics Overview"
+        description="Key performance indicators including total portfolio value, daily percentage changes, active blockchain networks, and token holdings count with real-time market data integration."
+        variant="default"
+      />
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
           <CardHeader className="pb-2">
@@ -157,21 +182,51 @@ const PortfolioOverview = ({ isConnected, walletData }: PortfolioOverviewProps) 
       </div>
 
       {/* Real-time Asset Tracking */}
+      <FeatureCallout
+        title="Asset Tracking System"
+        description="Advanced asset tracking with real-time price updates, percentage changes, and market cap data. Includes watchlist functionality and price alerts for your holdings."
+        variant="info"
+      />
       <AssetTracking isConnected={isConnected} walletData={walletData} />
 
       {/* Asset Allocation Chart */}
+      <FeatureCallout
+        title="Asset Allocation Visualization"
+        description="Interactive pie chart showing your portfolio distribution across different cryptocurrencies. Visual representation helps optimize your investment strategy and identify concentration risks."
+        variant="default"
+      />
       <AssetAllocationChart walletData={walletData} isConnected={isConnected} />
 
       {/* Real-time Performance Metrics */}
+      <FeatureCallout
+        title="Performance Analytics"
+        description="Comprehensive performance metrics including historical returns, volatility analysis, Sharpe ratio calculations, and risk-adjusted returns to evaluate your investment performance."
+        variant="success"
+      />
       <PerformanceMetrics isConnected={isConnected} walletData={walletData} />
 
       {/* Transaction History */}
+      <FeatureCallout
+        title="Transaction History & Analysis"
+        description="Complete transaction history with detailed analysis, categorization by type (buy/sell/transfer), and profit/loss calculations for tax reporting and portfolio management."
+        variant="info"
+      />
       <TransactionHistory isConnected={isConnected} walletData={walletData} />
 
       {/* Investment Positions */}
+      <FeatureCallout
+        title="Investment Position Management"
+        description="Detailed view of all investment positions including entry points, current values, unrealized gains/losses, and position sizing recommendations for portfolio optimization."
+        variant="default"
+      />
       <InvestmentPositions isConnected={isConnected} walletData={walletData} />
 
       {/* Real-time Risk Alerts */}
+      <FeatureCallout
+        title="Risk Management & Alerts"
+        description="Real-time risk monitoring system that analyzes portfolio concentration, volatility exposure, and market conditions to provide proactive risk alerts and recommendations."
+        variant="warning"
+      />
       <Card className="bg-black/40 border-orange-800/30 backdrop-blur-xl">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +12,7 @@ import EducationHub from "@/components/EducationHub";
 import SettingsPanel from "@/components/SettingsPanel";
 import CryptoTrading from "@/components/CryptoTrading";
 import BorrowingLending from "@/components/BorrowingLending";
+import FeatureCallout from "@/components/FeatureCallout";
 
 const Index = () => {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
@@ -78,17 +78,24 @@ const Index = () => {
 
           {/* Navigation Menu */}
           <nav className="mt-6">
+            <FeatureCallout
+              title="Comprehensive DeFi Platform Navigation"
+              description="Access all DeFi tools in one place: AI-powered insights, real-time portfolio tracking, advanced trading, lending protocols, risk-free simulations, educational resources, and personalized settings."
+              variant="info"
+              className="mb-4"
+            />
+            
             <div className="bg-black/20 backdrop-blur-xl rounded-lg p-2">
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:flex-wrap gap-2">
                 {[
-                  { id: 'aichat', label: 'AI Chat', icon: MessageSquare },
-                  { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-                  { id: 'trading', label: 'Trading', icon: ArrowUpDown },
-                  { id: 'borrowing', label: 'Lending', icon: DollarSign },
-                  { id: 'simulate', label: 'Simulation', icon: Zap },
-                  { id: 'portfolio', label: 'Portfolio', icon: TrendingUp },
-                  { id: 'education', label: 'Education', icon: BookOpen },
-                  { id: 'settings', label: 'Settings', icon: Settings },
+                  { id: 'aichat', label: 'AI Chat', icon: MessageSquare, description: 'AI-powered DeFi assistant' },
+                  { id: 'dashboard', label: 'Dashboard', icon: BarChart3, description: 'Comprehensive overview' },
+                  { id: 'trading', label: 'Trading', icon: ArrowUpDown, description: 'Advanced trading tools' },
+                  { id: 'borrowing', label: 'Lending', icon: DollarSign, description: 'Lending & borrowing' },
+                  { id: 'simulate', label: 'Simulation', icon: Zap, description: 'Risk-free testing' },
+                  { id: 'portfolio', label: 'Portfolio', icon: TrendingUp, description: 'Portfolio analytics' },
+                  { id: 'education', label: 'Education', icon: BookOpen, description: 'Learning resources' },
+                  { id: 'settings', label: 'Settings', icon: Settings, description: 'Platform preferences' },
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -98,6 +105,7 @@ const Index = () => {
                         ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/25'
                         : 'text-purple-300 hover:text-white hover:bg-purple-800/30'
                     }`}
+                    title={tab.description}
                   >
                     <tab.icon className="w-4 h-4" />
                     <span className="font-medium text-sm">{tab.label}</span>
@@ -124,6 +132,14 @@ const Index = () => {
                 Back to Home
               </Button>
             </div>
+            
+            <FeatureCallout
+              title="Full-Screen AI Assistant"
+              description="Advanced AI chat interface with real-time wallet integration, comprehensive DeFi analysis, trading recommendations, risk assessment, and personalized financial insights."
+              variant="success"
+              defaultExpanded={true}
+            />
+            
             <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
@@ -144,17 +160,93 @@ const Index = () => {
           <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
             {/* Main Content */}
             <div className="xl:col-span-3">
-              {activeTab === 'dashboard' && <Dashboard isConnected={isWalletConnected} walletData={walletData} />}
-              {activeTab === 'portfolio' && <PortfolioOverview isConnected={isWalletConnected} walletData={walletData} />}
-              {activeTab === 'trading' && <CryptoTrading walletData={walletData} />}
-              {activeTab === 'borrowing' && <BorrowingLending />}
-              {activeTab === 'simulate' && <SimulationPanel />}
-              {activeTab === 'education' && <EducationHub />}
-              {activeTab === 'settings' && <SettingsPanel />}
+              {activeTab === 'dashboard' && (
+                <>
+                  <FeatureCallout
+                    title="Comprehensive Dashboard"
+                    description="Real-time overview of your DeFi portfolio with market insights, performance metrics, recent transactions, and AI-powered recommendations for optimal trading strategies."
+                    variant="success"
+                    className="mb-6"
+                  />
+                  <Dashboard isConnected={isWalletConnected} walletData={walletData} />
+                </>
+              )}
+              {activeTab === 'portfolio' && (
+                <>
+                  <FeatureCallout
+                    title="Advanced Portfolio Analytics"
+                    description="Deep dive into your portfolio performance with asset allocation, risk analysis, historical performance tracking, and automated rebalancing suggestions."
+                    variant="info"
+                    className="mb-6"
+                  />
+                  <PortfolioOverview isConnected={isWalletConnected} walletData={walletData} />
+                </>
+              )}
+              {activeTab === 'trading' && (
+                <>
+                  <FeatureCallout
+                    title="Professional Trading Suite"
+                    description="Advanced trading interface with multi-DEX integration, limit orders, automated strategies, technical analysis tools, and real-time market data feeds."
+                    variant="warning"
+                    className="mb-6"
+                  />
+                  <CryptoTrading walletData={walletData} />
+                </>
+              )}
+              {activeTab === 'borrowing' && (
+                <>
+                  <FeatureCallout
+                    title="Lending & Borrowing Platform"
+                    description="Access decentralized lending protocols with competitive rates, collateral management, liquidation protection, and yield optimization strategies."
+                    variant="success"
+                    className="mb-6"
+                  />
+                  <BorrowingLending />
+                </>
+              )}
+              {activeTab === 'simulate' && (
+                <>
+                  <FeatureCallout
+                    title="Advanced Simulation Laboratory"
+                    description="Risk-free testing environment for DeFi strategies including token swaps, lending positions, liquidity provision, and complex multi-step transactions."
+                    variant="info"
+                    className="mb-6"
+                  />
+                  <SimulationPanel />
+                </>
+              )}
+              {activeTab === 'education' && (
+                <>
+                  <FeatureCallout
+                    title="DeFi Education Hub"
+                    description="Comprehensive learning center with tutorials, market analysis, protocol guides, risk management strategies, and interactive courses for all skill levels."
+                    variant="default"
+                    className="mb-6"
+                  />
+                  <EducationHub />
+                </>
+              )}
+              {activeTab === 'settings' && (
+                <>
+                  <FeatureCallout
+                    title="Platform Configuration"
+                    description="Customize your SageChain experience with notification preferences, security settings, API integrations, and personalized dashboard configurations."
+                    variant="warning"
+                    className="mb-6"
+                  />
+                  <SettingsPanel />
+                </>
+              )}
             </div>
 
             {/* AI Chat Sidebar */}
             <div className="xl:col-span-1">
+              <FeatureCallout
+                title="AI Assistant Sidebar"
+                description="Quick access to AI-powered insights, real-time market analysis, and personalized recommendations based on your portfolio and trading activity."
+                variant="info"
+                className="mb-4"
+              />
               <AIChat walletData={walletData} />
             </div>
           </div>
