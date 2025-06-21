@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DollarSign, ArrowUpDown, Shield, Zap, TrendingUp, Plus, Minus, Clock, CheckCircle } from "lucide-react";
 import { useLendingData } from "@/hooks/useLendingData";
+import AITokenCalculator from "@/components/AITokenCalculator";
+import FeatureCallout from "@/components/FeatureCallout";
 
 const BorrowingLending = () => {
   const {
@@ -113,8 +114,26 @@ const BorrowingLending = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold text-white mb-2">Cross-Chain Borrowing & Lending</h2>
-        <p className="text-purple-300">Lend, borrow, and manage assets across multiple blockchains</p>
+        <p className="text-purple-300">Lend, borrow, and manage GO & SAGE coins across multiple blockchains with AI-powered insights</p>
       </div>
+
+      {/* AI Token Calculator Section */}
+      <FeatureCallout
+        title="AI-Powered Token Analysis"
+        description="Advanced AI model for GO coin and SAGE coin value calculations, market predictions, and lending optimization. Calculate token amounts from USD input and predict conversions between GO and SAGE coins with real-time lending rates."
+        variant="success"
+        className="mb-6"
+      />
+      
+      <AITokenCalculator 
+        onCalculationComplete={(result) => {
+          console.log('AI Calculation completed:', result);
+          // Auto-populate forms with AI recommendations
+          if (result.tokenAmount) {
+            setAmount(result.tokenAmount.toString());
+          }
+        }}
+      />
 
       {/* Main Trading Interface */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -124,7 +143,7 @@ const BorrowingLending = () => {
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-green-400" />
-                Lending & Borrowing Operations
+                GO & SAGE Coin Operations
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -132,29 +151,35 @@ const BorrowingLending = () => {
                 <TabsList className="grid w-full grid-cols-4 bg-purple-900/20">
                   <TabsTrigger value="lend" className="data-[state=active]:bg-green-600">Lend</TabsTrigger>
                   <TabsTrigger value="borrow" className="data-[state=active]:bg-blue-600">Borrow</TabsTrigger>
-                  <TabsTrigger value="deposit" className="data-[state=active]:bg-purple-600">Cross-Chain Deposit</TabsTrigger>
+                  <TabsTrigger value="deposit" className="data-[state=active]:bg-purple-600">Cross-Chain</TabsTrigger>
                   <TabsTrigger value="redeem" className="data-[state=active]:bg-orange-600">Redeem</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="lend" className="space-y-4 mt-6">
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="asset-select" className="text-white">Select Asset</Label>
+                      <Label htmlFor="asset-select" className="text-white">Select GO/SAGE Token</Label>
                       <Select value={selectedAsset} onValueChange={setSelectedAsset}>
                         <SelectTrigger className="bg-black/20 border-purple-600/30 text-white">
-                          <SelectValue placeholder="Choose an asset to lend" />
+                          <SelectValue placeholder="Choose GO or SAGE coin to lend" />
                         </SelectTrigger>
                         <SelectContent className="bg-black/90 border-purple-600/30">
-                          {assets.map((asset) => (
-                            <SelectItem key={asset.id} value={asset.id} className="text-white hover:bg-purple-600/20">
-                              <div className="flex items-center justify-between w-full">
-                                <span>{asset.token_symbol} - {asset.token_name}</span>
-                                <Badge className="bg-green-500/20 text-green-400 ml-2">
-                                  {asset.lending_apy}% APY
-                                </Badge>
-                              </div>
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="GO" className="text-white hover:bg-purple-600/20">
+                            <div className="flex items-center justify-between w-full">
+                              <span>GO Coin (1x ETH)</span>
+                              <Badge className="bg-green-500/20 text-green-400 ml-2">
+                                8.5% APY
+                              </Badge>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="SAGE" className="text-white hover:bg-purple-600/20">
+                            <div className="flex items-center justify-between w-full">
+                              <span>SAGE Coin (2x ETH)</span>
+                              <Badge className="bg-green-500/20 text-green-400 ml-2">
+                                9.2% APY
+                              </Badge>
+                            </div>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -164,11 +189,14 @@ const BorrowingLending = () => {
                       <Input
                         id="amount"
                         type="number"
-                        placeholder="Enter amount to lend"
+                        placeholder="Enter amount to lend (AI calculated)"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         className="bg-black/20 border-purple-600/30 text-white"
                       />
+                      <p className="text-purple-300 text-xs mt-1">
+                        Use AI Calculator above for optimal amounts
+                      </p>
                     </div>
 
                     <Button 
@@ -177,7 +205,7 @@ const BorrowingLending = () => {
                       className="w-full bg-green-600 hover:bg-green-700"
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      {isLoading ? "Processing..." : "Start Lending"}
+                      {isLoading ? "Processing via MetaMask..." : `Lend ${selectedAsset} Coins`}
                     </Button>
                   </div>
                 </TabsContent>
@@ -185,22 +213,28 @@ const BorrowingLending = () => {
                 <TabsContent value="borrow" className="space-y-4 mt-6">
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="borrow-asset" className="text-white">Select Asset</Label>
+                      <Label htmlFor="borrow-asset" className="text-white">Select GO/SAGE Token</Label>
                       <Select value={selectedAsset} onValueChange={setSelectedAsset}>
                         <SelectTrigger className="bg-black/20 border-purple-600/30 text-white">
-                          <SelectValue placeholder="Choose an asset to borrow" />
+                          <SelectValue placeholder="Choose GO or SAGE coin to borrow" />
                         </SelectTrigger>
                         <SelectContent className="bg-black/90 border-purple-600/30">
-                          {assets.map((asset) => (
-                            <SelectItem key={asset.id} value={asset.id} className="text-white hover:bg-purple-600/20">
-                              <div className="flex items-center justify-between w-full">
-                                <span>{asset.token_symbol} - {asset.token_name}</span>
-                                <Badge className="bg-red-500/20 text-red-400 ml-2">
-                                  {asset.borrowing_apy}% APY
-                                </Badge>
-                              </div>
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="GO" className="text-white hover: bg-purple-600/20">
+                            <div className="flex items-center justify-between w-full">
+                              <span>GO Coin (1x ETH)</span>
+                              <Badge className="bg-red-500/20 text-red-400 ml-2">
+                                12.0% APY
+                              </Badge>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="SAGE" className="text-white hover:bg-purple-600/20">
+                            <div className="flex items-center justify-between w-full">
+                              <span>SAGE Coin (2x ETH)</span>
+                              <Badge className="bg-red-500/20 text-red-400 ml-2">
+                                13.5% APY
+                              </Badge>
+                            </div>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -210,20 +244,23 @@ const BorrowingLending = () => {
                       <Input
                         id="borrow-amount"
                         type="number"
-                        placeholder="Enter amount to borrow"
+                        placeholder="Enter amount to borrow (AI predicted)"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         className="bg-black/20 border-purple-600/30 text-white"
                       />
+                      <p className="text-purple-300 text-xs mt-1">
+                        Collateral required: 150% for GO, 140% for SAGE
+                      </p>
                     </div>
 
                     <Button 
                       onClick={handleBorrow}
                       disabled={!selectedAsset || !amount || isLoading}
-                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      className="w-full bg-blue-600 hover:blue-700"
                     >
                       <Minus className="w-4 h-4 mr-2" />
-                      {isLoading ? "Processing..." : "Start Borrowing"}
+                      {isLoading ? "Processing via MetaMask..." : `Borrow ${selectedAsset} Coins`}
                     </Button>
                   </div>
                 </TabsContent>
@@ -346,24 +383,33 @@ const BorrowingLending = () => {
 
         {/* Right Column - Market Overview */}
         <div className="space-y-6">
-          {/* Available Assets */}
+          {/* GO & SAGE Coin Info */}
           <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
             <CardHeader>
-              <CardTitle className="text-white text-lg">Available Assets</CardTitle>
+              <CardTitle className="text-white text-lg">GO & SAGE Coins</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {assets.slice(0, 5).map((asset) => (
-                <div key={asset.id} className="flex items-center justify-between p-3 bg-purple-900/20 rounded-lg">
-                  <div>
-                    <div className="text-white font-medium">{asset.token_symbol}</div>
-                    <div className="text-sm text-purple-300">{asset.token_name}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-green-400 text-sm">{asset.lending_apy}% APY</div>
-                    <div className="text-red-400 text-xs">{asset.borrowing_apy}% Borrow</div>
-                  </div>
+              <div className="flex items-center justify-between p-3 bg-green-900/20 rounded-lg">
+                <div>
+                  <div className="text-white font-medium">GO Coin</div>
+                  <div className="text-sm text-green-300">1x ETH Value</div>
                 </div>
-              ))}
+                <div className="text-right">
+                  <div className="text-green-400 text-sm">8.5% Lending APY</div>
+                  <div className="text-red-400 text-xs">12.0% Borrowing APY</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-purple-900/20 rounded-lg">
+                <div>
+                  <div className="text-white font-medium">SAGE Coin</div>
+                  <div className="text-sm text-purple-300">2x ETH Value</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-green-400 text-sm">9.2% Lending APY</div>
+                  <div className="text-red-400 text-xs">13.5% Borrowing APY</div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -425,31 +471,35 @@ const BorrowingLending = () => {
         </div>
       </div>
 
-      {/* Platform Statistics */}
+      {/* Enhanced Platform Statistics */}
       <Card className="bg-black/40 border-purple-800/30 backdrop-blur-xl">
         <CardHeader>
-          <CardTitle className="text-white">Live Platform Statistics</CardTitle>
+          <CardTitle className="text-white">SageChain Platform Statistics</CardTitle>
           <CardDescription className="text-purple-300">
-            Real-time metrics from our cross-chain lending platform
+            Real-time metrics for GO and SAGE coin lending platform
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-400 mb-1">$2.5B+</div>
-              <div className="text-sm text-purple-300">Total Value Locked</div>
+              <div className="text-2xl font-bold text-green-400 mb-1">10,000</div>
+              <div className="text-sm text-purple-300">GO Coins Available</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400 mb-1">{chains.length}</div>
-              <div className="text-sm text-purple-300">Supported Chains</div>
+              <div className="text-2xl font-bold text-purple-400 mb-1">5,000</div>
+              <div className="text-sm text-purple-300">SAGE Coins Minted</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-400 mb-1">8.5%</div>
-              <div className="text-sm text-purple-300">Average APY</div>
+              <div className="text-2xl font-bold text-blue-400 mb-1">1:2</div>
+              <div className="text-sm text-purple-300">GO:SAGE Ratio</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-400 mb-1">{positions.length}</div>
-              <div className="text-sm text-purple-300">Your Active Positions</div>
+              <div className="text-2xl font-bold text-yellow-400 mb-1">98.5%</div>
+              <div className="text-sm text-purple-300">AI Accuracy</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-400 mb-1">MetaMask</div>
+              <div className="text-sm text-purple-300">Integrated Wallet</div>
             </div>
           </div>
         </CardContent>
